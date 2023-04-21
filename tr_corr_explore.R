@@ -202,6 +202,7 @@ month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 
 # yrs.mark$mark.doy <- lubridate::yday(yrs.mark$Date)
 # yrs.mark$mark.doy[1] <- yrs.mark$mark.doy[1]-365
 
+#Figures----
 head(mod.out)
 # ordering the TR data variables
 mod.out$resp <- factor(mod.out$resp, levels = c("lw", "ew", "rw"))
@@ -212,8 +213,8 @@ pdf("figures/CriticalPeriods_tr/ClimateCorr_0.01_t-stat_.pdf", height=8, width=1
 for(PLT in unique(mod.out$pred)){
   print(
     ggplot(data=mod.out[mod.out$pred==PLT,]) +
-      facet_grid(resp~., scales="free") +
-      ggtitle(paste0(PLT, "alpa=0.01")) +
+      facet_grid(~pred, scales="free") +
+      ggtitle(paste0(PLT, " 5Day Morton Oaks Climate Corr.: Sig. T-stat; RWI, alpha=0.01")) +
       geom_tile(data=mod.out[mod.out$pred==PLT & mod.out$p.val>=0.01,], aes(x=doy, y=resp), fill="gray50") +
       geom_tile(data=mod.out[mod.out$pred==PLT & mod.out$p.val<0.01,], aes(x=doy, y=resp, fill=t.stat)) +
       # geom_tile(aes(x=doy, y=resp, fill=t.stat)) +
@@ -234,7 +235,7 @@ for(i in unique(mod.out$pred)){
 print(
   ggplot(data=mod.out[mod.out$pred==i,]) +
   facet_grid(~pred, scales="free") +
-  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI; alpha=0.05") +
+  ggtitle("5Day Morton Oaks Climate Corr.: Sig. T-stat; RWI; alpha=0.05") +
   geom_tile(data=mod.out[mod.out$pred==i & mod.out$p.val>=0.05,], aes(x=doy, y=resp), fill="gray50") +
   geom_tile(data=mod.out[mod.out$pred==i & mod.out$p.val<0.05,], aes(x=doy, y=resp, fill=t.stat)) +
   # geom_tile(aes(x=doy, y=resp, fill=t.stat)) +
@@ -246,72 +247,33 @@ print(
 }
 dev.off()
 
-png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.01.png"), height=10, width=8, units="in", res=120)
-ggplot(data=mod.out) +
-  facet_grid(pred~., scales="free") +
-  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
-  geom_tile(data=mod.out[mod.out$p.val>=0.01,], aes(x=doy, y=PlotID), fill="gray50") +
-  geom_tile(data=mod.out[mod.out$p.val<0.01,], aes(x=doy, y=PlotID, fill=t.stat)) +
-  # geom_tile(aes(x=doy, y=resp, fill=t.stat)) +
-  geom_vline(xintercept = 0, linetype="dashed") +
-  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
-  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.doy, labels = yrs.mark$Label) +
-  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
-  theme(legend.position="top")
-dev.off()
 
-png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.01_byPlot.png"), height=10, width=8, units="in", res=120)
-ggplot(data=mod.out) +
-  facet_grid(PlotID~., scales="free") +
-  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
-  geom_tile(data=mod.out[mod.out$p.val>=0.01,], aes(x=doy, y=pred), fill="gray50") +
-  geom_tile(data=mod.out[mod.out$p.val<0.01,], aes(x=doy, y=pred, fill=t.stat)) +
-  # geom_tile(aes(x=doy, y=resp, fill=t.stat)) +
-  geom_vline(xintercept = 0, linetype="dashed") +
-  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
-  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.doy, labels = yrs.mark$Label) +
-  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
-  theme(legend.position="top")
-dev.off()
+# png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_5day_ringwidth_r-val.png"), height=10, width=8, units="in", res=120)
+# ggplot(data=mod.out[mod.out$resp=="rw" & mod.out$p.val <0.05,]) +
+#   #facet_grid(pred~., scales="free") +
+#   ggtitle("Daily Climate Corr.: r-value; RWI") +
+#   geom_tile(data=mod.out[mod.out$resp=="rw" & mod.out$p.val > 0.05,], aes(x=doy, y=pred), fill="grey50") +
+#   geom_tile(aes(x=doy, y=pred, fill=sqrt(r.sq.m)*sign(t.stat))) +
+#   scale_y_discrete(name="Drought Index", expand=c(0,0)) +
+#   scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+#   scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
+#   theme(legend.position="top")
+# dev.off()
 
-png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.05_byPlot.png"), height=10, width=8, units="in", res=120)
-ggplot(data=mod.out) +
-  facet_grid(PlotID~., scales="free") +
-  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
-  geom_tile(data=mod.out[mod.out$p.val>=0.05,], aes(x=doy, y=pred), fill="gray50") +
-  geom_tile(data=mod.out[mod.out$p.val<0.05,], aes(x=doy, y=pred, fill=t.stat)) +
-  # geom_tile(aes(x=doy, y=resp, fill=t.stat)) +
-  geom_vline(xintercept = 0, linetype="dashed") +
-  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
-  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.doy, labels = yrs.mark$Label) +
-  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
-  theme(legend.position="top")
-dev.off()
-
-
-
-
-png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_r-val.png"), height=10, width=8, units="in", res=120)
-ggplot(data=mod.out) +
-  facet_grid(pred~., scales="free") +
-  ggtitle("Daily Climate Corr.: r-value; RWI") +
-  geom_tile(aes(x=doy, y=PlotID, fill=sqrt(r.sq.m)*sign(t.stat))) +
-  geom_vline(xintercept = 0, linetype="dashed") +
-  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
-  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.doy, labels = yrs.mark$Label) +
+pdf(file = "figures/CriticalPeriods_tr/ClimateCorr_5day_r-val.pdf", height=8, width=10)
+for(i in unique(mod.out$pred)){
+print(
+  ggplot(data=mod.out[mod.out$pred==i & mod.out$p.val <0.05,]) +
+  facet_grid(~pred, scales="free") +
+  ggtitle(paste0(i, " 5Day Morton Oaks Climate Corr.: r-value; alpha=0.05")) +
+  geom_tile(data=mod.out[mod.out$pred==i & mod.out$p.val > 0.05,], aes(x=doy, y=resp), fill="grey50") +
+  geom_tile(aes(x=doy, y=resp, fill=sqrt(r.sq.m)*sign(t.stat))) +
+  scale_y_discrete(name="Drought Index", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
   scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
   theme(legend.position="top")
+  )
+}
 dev.off()
 
-png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_r-val_byPlot.png"), height=10, width=8, units="in", res=120)
-ggplot(data=mod.out) +
-  facet_grid(PlotID~., scales="free") +
-  ggtitle("Daily Climate Corr.: r-value; RWI") +
-  geom_tile(aes(x=doy, y=pred, fill=sqrt(r.sq.m)*sign(t.stat))) +
-  geom_vline(xintercept = 0, linetype="dashed") +
-  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
-  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.doy, labels = yrs.mark$Label) +
-  scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
-  theme(legend.position="top")
-dev.off()
 
