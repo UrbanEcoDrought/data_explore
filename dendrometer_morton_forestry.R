@@ -32,17 +32,20 @@ dev.off()
 
 var.dat <- data.frame(date = unique(dendro.dat2$date.central))
 
-pb <- txtProgressBar(min=0, max=length(unique(var.dat$date)), style=3)
+pb <- txtProgressBar(min=0, max=length(unique(dendro.dat2$id.num)), style=3)
 pb.ind=1
-for(i in var.dat$date){
-  for(j in unique(dendro.dat2$id.num)){
-    temp <- dendro.dat2[dendro.dat2$date.central==i & dendro.dat2$id.num==j, ]  
-    max.temp <- max(temp$t1) # max value for the day
-    min.temp <- min(temp$t1) # min value for the day
+for(i in unique(dendro.dat2$id.num)){
+    temp <- dendro.dat2[dendro.dat2$id.num==i, ]  
+  
+  for(j in unique(temp$date.central)){
+    temp.time <- temp[temp$date.central==j,]
+    
+    max.temp <- max(temp.time$t1, na.rm=T) # max value for the day
+    min.temp <- min(temp.time$t1, na.rm=T) # min value for the day
     
     range.temp <- max.temp - min.temp # calculating the range of the swell for each day
     
-    var.dat[var.dat$date==i, j] <- range.temp # saving with dates as rows and sensors as columns
+    var.dat[var.dat$date==j, i] <- range.temp # saving with dates as rows and sensors as columns
     
   }
   setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
@@ -56,4 +59,49 @@ names(var.dat.stack) <- c("swell", "id.num")
 head(var.dat.stack)
 var.dat.stack$date <- var.dat$date
 
+# bringing in the plot ID with the sensor number
+var.dat.stack$plotID <- dendro.dat2$plotID[match(var.dat.stack$id.num, dendro.dat2$id.num)]
+var.dat.stack$month <- lubridate::month(var.dat.stack$date)
+var.dat.stack$month.name <- lubridate::month(var.dat.stack$date, abb=T, label=T)
+var.dat.stack$year <- lubridate::year(var.dat.stack$date)
+var.dat.stack$doy <- lubridate::yday(var.dat.stack$date)
+
 saveRDS(var.dat.stack, "processed_data/dendrometer_swell_variability.RDS")
+
+##############
+# making plots of the swell
+
+
+var.dat.stack <- readRDS("processed_data/dendrometer_swell_variability.RDS")
+# going to truncate the data from may - august to avoid some of the weirdness
+
+head(var.dat.stack)
+
+var.dat.stack2 <- var.dat.stack[var.dat.stack$month >=4& var.dat.stack$month <=9,]
+
+# bringing in daymet data
+daymet.df <- readRDS("../data_gathering_cleaniing/processed_data/morton_daymet.RDS")
+head(daymet.df)
+
+daymet.df.short <- daymet.df[daymet.df$yday %in% var.dat.stack2$doy,]
+
+# Plotting the swell by plot 
+library(zoo)
+pdf(file="figures/dendrometer/plot_swell.pdf", height= 8, width = 10)
+for(i in unique(var.dat.stack2$plotID)){
+  print(
+    ggplot(data=var.dat.stack2[var.dat.stack2$plotID==i,]) + facet_grid(id.num~year) +
+      geom_tile(data=daymet.df.short, aes(x=yday, y = 1, fill= vpd.kpa), height= 100)+
+      geom_line(aes(x=doy, y=swell)) +
+      geom_line(aes(x=doy, y=rollmean(swell, 10, na.pad=T, align="right")), col="#0072B2", linewidth=0.95) +
+      scale_fill_gradient(high = "#d8b365", low= "#5ab4ac") +
+      labs(title = paste0(i, " TOMST Dendrometers April-Sept; Daily Swell w/ 10day rolling average"), x = "DOY", y = "Swell (Daily Max - Daily Min)") +
+    coord_cartesian(ylim=c(0,max(var.dat.stack2$swell, na.rm=T)))+
+      scale_x_continuous(expand=c(0,0))
+  )
+}
+dev.off()
+
+ggplot(data= daymet.df.short) +
+  geom_tile(aes(x=yday, y = 1, fill= vpd.kpa)) +
+scale_fill_gradient(high = "#d8b365", low= "#5ab4ac")
