@@ -105,3 +105,78 @@ dev.off()
 ggplot(data= daymet.df.short) +
   geom_tile(aes(x=yday, y = 1, fill= vpd.kpa)) +
 scale_fill_gradient(high = "#d8b365", low= "#5ab4ac")
+
+
+#############################
+# Correlation Analysis----
+
+summary(var.dat.stack2)
+summary(daymet.df.short)
+
+# combining vpd and swell into a single data frame
+
+cor.dat <- data.frame(year = var.dat.stack2$year,
+                      doy = var.dat.stack2$doy,
+                      swell = var.dat.stack2$swell,
+                      plotID = var.dat.stack2$plotID)
+
+cor.dat <- merge(cor.dat, daymet.df.short[,c("year", "yday", "vpd.kpa")], by.x=c("year", "doy"), by.y=c("year", "yday"))
+
+head(cor.dat)
+
+cor.output <- data.frame(plotID=unique(cor.dat$plotID),
+                         r.value = NA,
+                         p.value = NA)
+
+for(i in unique(cor.dat$plotID)){
+  test <- cor.dat[cor.dat$plotID==i,]
+  
+ meow <-  cor.test(test$swell, test$vpd.kpa, na.rm=T)
+  
+  cor.output[cor.output$plotID==i,"r.value"] <- meow$estimate
+  cor.output[cor.output$plotID==i,"p.value"] <- meow$p.value
+}
+
+cor.output
+cor.output$sig <- ifelse(cor.output$p.value <0.05, "YES", "NO")
+
+
+
+cov.output <- data.frame(plotID=unique(cor.dat$plotID),
+                         cov.value = NA,
+                         p.value = NA)
+
+for(i in unique(cor.dat$plotID)){
+  test <- cor.dat[cor.dat$plotID==i,]
+  
+  meow <-  cov(test$swell, test$vpd.kpa, use="pairwise.complete.obs")
+  
+  cov.output[cov.output$plotID==i,"cov.value"] <- meow
+  
+}
+
+cov.output
+cov.output$sig <- ifelse(cov.output$p.value <0.05, "YES", "NO")
+
+
+ggplot(data=cor.dat) + facet_wrap(plotID~.) +
+  geom_point(aes(x=swell, y = vpd.kpa))+
+  stat_smooth(aes(x=swell, y=vpd.kpa),method="lm")
+
+plot.order <- cor.output[order(cor.output$r.value, decreasing = T),"plotID"]
+cor.output$plotID <- factor(cor.output$plotID, levels = plot.order)
+
+cor.output$spp <- substr(cor.output$plotID,1,4)
+
+# Reading in some preliminary species drought tolerance designations
+tol.dat <- read.csv("input_data/spp_drought_tolerance_MRA.csv", header=T)
+
+cor.output$tolerance <- tol.dat$composite.tolerance[match(cor.output$spp, tol.dat$spp)]
+
+
+png(filename = "figures/dendrometer/swell_vpd_cors.png", height = 8, width= 10, unit = "in", res=300)
+ggplot(data=cor.output)+
+  geom_point(aes(y=rev(plotID),x=r.value, col=rev(tolerance)), size=4) +
+  labs(x= "Pearson's R", y = "PlotID", title= "Correlation between Swell and VPD at Morton Forestry Plots") +
+  theme_bw()
+dev.off()

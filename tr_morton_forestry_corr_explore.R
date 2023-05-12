@@ -245,7 +245,7 @@ for(i in unique(mod.out$pred)){
 print(
   ggplot(data=mod.out[mod.out$pred==i & mod.out$p.val <0.05,]) +
   facet_grid(~pred, scales="free") +
-  ggtitle(paste0(i, " 5Day Morton Oaks Climate Corr.: r-value; alpha=0.05")) +
+  ggtitle(paste0(i, " 5Day Morton Forestry Plot Climate Corr.: r-value; alpha=0.05")) +
   geom_tile(data=mod.out[mod.out$pred==i & mod.out$p.val > 0.05,], aes(x=doy, y=resp), fill="grey50") +
   geom_tile(aes(x=doy, y=resp, fill=sqrt(r.sq.m)*sign(t.stat))) +
   scale_y_discrete(name="Drought Index", expand=c(0,0)) +
