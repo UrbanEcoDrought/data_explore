@@ -44,16 +44,16 @@ names(mam.dry) <- c("year", "value")
 mam.dry$var <- "precip.mm"
 mam.dry$type <- "low"
 
-# Flipped VPD so that the colors would align in the plots
+
 mam.hi.vpd <- mam.dat[mam.dat$vpd.kpa > mam.vpd.cuts[2], c("year", "vpd.kpa")]
 names(mam.hi.vpd) <- c("year", "value")
 mam.hi.vpd$var <- "vpd.kpa"
-mam.hi.vpd$type <- "low"
-# Flipped VPD so that the colors would align in the plots
+mam.hi.vpd$type <- "high"
+
 mam.low.vpd <- mam.dat[mam.dat$vpd.kpa < mam.vpd.cuts[1], c("year", "vpd.kpa")]
 names(mam.low.vpd) <- c("year", "value")
 mam.low.vpd$var <- "vpd.kpa"
-mam.low.vpd$type <- "high"
+mam.low.vpd$type <- "low"
 
 mam.hi.pet <- mam.dat[mam.dat$pet.hargreves > mam.pet.cuts[2], c("year", "pet.hargreves")]
 names(mam.hi.pet) <- c("year", "value")
@@ -90,12 +90,12 @@ jja.dry$type <- "low"
 jja.hi.vpd <- jja.dat[jja.dat$vpd.kpa > jja.vpd.cuts[2], c("year", "vpd.kpa")]
 names(jja.hi.vpd) <- c("year", "value")
 jja.hi.vpd$var <- "vpd.kpa"
-jja.hi.vpd$type <- "low"
+jja.hi.vpd$type <- "high"
 # Flipped VPD so that the colors would align in the plots
 jja.low.vpd <- jja.dat[jja.dat$vpd.kpa < jja.vpd.cuts[1], c("year", "vpd.kpa")]
 names(jja.low.vpd) <- c("year", "value")
 jja.low.vpd$var <- "vpd.kpa"
-jja.low.vpd$type <- "high"
+jja.low.vpd$type <- "low"
 
 
 jja.hi.pet <- jja.dat[jja.dat$pet.hargreves > jja.pet.cuts[2], c("year", "pet.hargreves")]
@@ -174,7 +174,7 @@ ggplot(data=chi.dat.stack) + facet_grid(variable~season, scales="free_y") +
 ggplot(data=chi.dat.stack) + facet_grid(variable~season, scales="free_y") +
   geom_line(aes(x=year, y=values), size=0.75, color="darkgrey") +
   geom_point(aes(x=year, y=values, color=type), size=3) +
-  geom_label(data=chi.dat.stack[!chi.dat.stack$type=="moderate",], aes(x=year, y=0, label=year), size=3)+
+  #geom_label(data=chi.dat.stack[!chi.dat.stack$type=="moderate",], aes(x=year, y=values, label=year), size=3)+
   scale_color_got_d(option="Tully") +
   theme_bw()
 
