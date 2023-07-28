@@ -5,6 +5,15 @@ library(ggplot2)
 
 dendro.dat <- readRDS("../data_gathering_cleaniing/processed_data/morton_dendrometer_cleaned.rds")
 
+# Subbing in the june2023 data pulls
+dendro.dat.2023 <- readRDS("../data_gathering_cleaniing/processed_data/morton_dendrometer_cleaned_2023.rds")
+
+dim(dendro.dat)
+dim(dendro.dat.2023)
+
+# combining the two datasets
+dendro.dat <- rbind(dendro.dat, dendro.dat.2023)
+
 # have some time zone issues that I will need to talk through with Luke to make sure that the dates align
 # shifting to be central time
 
@@ -179,4 +188,31 @@ ggplot(data=cor.output)+
   geom_point(aes(y=rev(plotID),x=r.value, col=rev(tolerance)), size=4) +
   labs(x= "Pearson's R", y = "PlotID", title= "Correlation between Swell and VPD at Morton Forestry Plots") +
   theme_bw()
+dev.off()
+
+
+
+###########################
+# 2023 drought analysis----
+############################
+
+# wanting to look at the 2023 drought as compared with the other years on record
+summary(var.dat.stack2)
+
+library(zoo)
+pdf(file="figures/dendrometer/plot_swell_year.pdf", height= 8, width = 10)
+for(i in unique(var.dat.stack2$plotID)){
+  print(
+    ggplot(data=var.dat.stack2[var.dat.stack2$plotID==i,]) + facet_grid(id.num~.) +
+      # geom_tile(data=daymet.df.short, aes(x=yday, y = 1, fill= vpd.kpa), height= 100)+
+      geom_line(aes(x=doy, y=swell, col=as.factor(year)), alpha=0.2) +
+      geom_line(aes(x=doy, y=rollmean(swell, 10, na.pad=T, align="right"), col=as.factor(year)), linewidth=0.95) +
+      # scale_fill_gradient(high = "#d8b365", low= "#5ab4ac") +
+      scale_color_manual(values=c("2021" = "#99C1B9", "2022" = "#8E7DBE", "2023"="#D64045"))+
+      labs(title = paste0(i, " TOMST Dendrometers April-Sept; Daily Swell w/ 10day rolling average"), x = "DOY", y = "Swell (Daily Max - Daily Min)") +
+      coord_cartesian(ylim=c(0,max(var.dat.stack2$swell, na.rm=T)))+
+      scale_x_continuous(expand=c(0,0))+
+      theme_bw()
+  )
+}
 dev.off()
