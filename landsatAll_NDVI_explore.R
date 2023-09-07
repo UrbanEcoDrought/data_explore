@@ -10,7 +10,8 @@ head(ndvi.all)
 
 unique(ndvi.all$type)
 
-
+# for now let's just look at full years, so cutting 2023
+ndvi.all <- ndvi.all[!ndvi.all$year %in% 2023,]
 
 # separating ndvi object into individual land-cover objects
 ndvi.crop <- ndvi.all[ndvi.all$type=="crop",]
