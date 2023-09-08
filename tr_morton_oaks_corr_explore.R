@@ -9,12 +9,13 @@ library(dplyr)
 # load("input_data/OER_full_dataset.Rdata")
 # head(data.use)
 
-
+Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 # loading in morton oak series; will make into a chronology
-mort.rw <- read.tucson("input_data/OEM/mort_oaks11.rwl")
-mort.ew <- read.tucson("input_data/OEM/mort_oaks_ew.rwl")
-mort.lw <- read.tucson("input_data/OEM/mort_oaks_lww.rwl")
+mort.rw <- read.tucson(file.path(google.drive,"data/r_files/input_files/data_explore/OEM/mort_oaks11.rwl"))
+mort.ew <- read.tucson(file.path(google.drive,"data/r_files/input_files/data_explore/OEM/mort_oaks_ew.rwl"))
+mort.lw <- read.tucson(file.path(google.drive,"data/r_files/input_files/data_explore/OEM/mort_oaks_lww.rwl"))
 
 # using a stright 2/3 spline for now. We're just exploring here and really just want the interannual variability
 rw.detrend <- detrend(mort.rw, y.name="OEM", method="Spline")
@@ -53,7 +54,7 @@ head(dat.tr)
 # Bring in drought indices----
 # --------------
 # data are at every 5 days or so.
-dat.met <- read.csv("../data_gathering_cleaniing/processed_data/Morton_Drought_Datasets - Morton_Drought_Datasets_mra.csv", header=T)
+dat.met <- read.csv(file.path(google.drive,"data/r_files/input_files/data_gathering_cleaning/Morton_Drought_Datasets - Morton_Drought_Datasets_mra.csv"), header=T)
 summary(dat.met)
 dat.met$month <- month(dat.met$date)
 dat.met$month.name <- month(dat.met$date, label=T, abbr=T)
@@ -181,13 +182,13 @@ for(i in days.use){
 summary(mod.out)
 
 summary(mod.out[!is.na(mod.out$p.val),])
-write.csv(mod.out, file.path("processed_data", "tr_analyses","TR_ClimateCorrs_Daily.csv"), row.names=F)  
+write.csv(mod.out, file.path(google.drive,"data/r_files/processed_files", "tr_analyses","TR_ClimateCorrs_Daily.csv"), row.names=F)  
 # ----------------------------------
 
 # ----------------------------------
 # Plotting and exploring the output
 # ----------------------------------
-mod.out <- read.csv(file.path("processed_data", "tr_analyses","TR_ClimateCorrs_Daily.csv"))
+mod.out <- read.csv(file.path(google.drive,"data/r_files/processed_files", "tr_analyses","TR_ClimateCorrs_Daily.csv"), header=T)
 summary(mod.out)
 
 # creating a df of month breaks for plotting
