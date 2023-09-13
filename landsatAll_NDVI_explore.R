@@ -1,5 +1,6 @@
 # script to explore NDVI time series for the land cover classes of the chicago reigon
 library(ggplot2)
+library(lubridate)
 
 Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
@@ -123,8 +124,8 @@ mod.out$pred <- factor(mod.out$pred, levels=vars.pred)
 summary(mod.out)
 
 # adding in date for later
-mod.out$month <- month(dat.all$date[match(mod.out$doy, ndvi.all.cc$doy)], label=F)
-mod.out$month.name <- month(dat.all$date[match(mod.out$doy, ndvi.all.cc$doy)], label=T, abbr=T)
+mod.out$month <- month(ndvi.all.cc$date[match(mod.out$doy, ndvi.all.cc$doy)], label=F)
+mod.out$month.name <- month(ndvi.all.cc$date[match(mod.out$doy, ndvi.all.cc$doy)], label=T, abbr=T)
 date.temp <- as.Date(ndvi.all.cc$date[match(mod.out$doy, ndvi.all.cc$doy)])
 
 mod.out$month.day <- format(as.Date(date.temp), "%d-%m")
@@ -224,7 +225,7 @@ for(i in unique(mod.out$pred)){
       ggtitle(paste0(i, " Landsat NDVI-NDVI temporal Corr.: r-value; alpha=0.05")) +
       geom_tile(data=mod.out[mod.out$pred==i & mod.out$p.val > 0.05 & !is.na(mod.out$p.val),], aes(x=doy, y=resp), fill="grey50") +
       geom_tile(aes(x=doy, y=resp, fill=sqrt(r.sq.m)*sign(t.stat))) +
-      scale_y_discrete(name="Drought Index", expand=c(0,0)) +
+      scale_y_discrete(name="Land Cover Class", expand=c(0,0)) +
       scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
       scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
       theme(legend.position="top")
