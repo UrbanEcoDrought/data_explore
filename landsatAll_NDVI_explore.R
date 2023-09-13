@@ -217,7 +217,7 @@ head(mod.out)
 PRGn5 <- c("#7b3294", "#c2a5cf", "gray50", "#a6dba0", "#008837")
 
 
-pdf(file = file.path(google.drive,"data/r_files/figures/NDVICorr_5day_r-val.pdf"), height=8, width=10)
+pdf(file = file.path(google.drive,"data/r_files/figures/NDVICorr_r-val.pdf"), height=8, width=10)
 for(i in unique(mod.out$pred)){
   print(
     ggplot(data=mod.out[mod.out$pred==i & mod.out$p.val <0.05 & !is.na(mod.out$p.val),]) +
