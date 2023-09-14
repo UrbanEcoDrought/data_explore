@@ -1,7 +1,12 @@
 # 9/14/2023 Practice
-
+### From CR: Need to have scripted method for getting the data INTO R.  -- right now I don't know where ndvi.all is coming from.  shoudl have something like
+path.google <- "~/Google Drive/Shared drives/Urban Ecological Drought/" # This is the file path on a mac
+ndvi.all <- readRDS(file.path(path.google, "data/r_files/processed_files/landsat_ndvi_all.RDS")) # This lets me knwo exactly which file you're working with
+summary(ndvi.all) # Try using summary to double check the data rather than anythign like (view) --> view will be a nightmare with big data
+ 
 #Create a new table object with NA values removed from data.
 NDVIomitNA <- na.omit(ndvi.all)
+summary(NDVIomitNA)
 
 #Create a time series object with all NDVI data with NA values removed.
 tsNDVIomitNA <- ts(NDVIomitNA, start=c(2001), frequency=366)
@@ -15,6 +20,7 @@ library(ggplot2)
 
 #Add month column to data table.
 NDVIomitNA<-mutate(NDVIomitNA, Month = month(NDVIomitNA$date))
+summary(NDVIomitNA)
 
 #Add day column to data table.
 NDVIomitNA<-mutate(NDVIomitNA, Day = day(NDVIomitNA$date))
@@ -27,10 +33,12 @@ NDVIomitNA2022 <-NDVIomitNA[which(NDVIomitNA$Year %in% c(2001:2022)),]
 
 #Aggregate points to get one NDVI per day of the year (doy)
 NDVI_doy <- aggregate(NDVI ~ doy, data = NDVIomitNA2022, FUN = mean)
+summary(NDVI_doy)
 plot(NDVI_doy)
 
 #Aggregate points to get one NDVI per day of the year with year as another variable
 NDVI_doy <- aggregate(NDVI ~ doy + year, data = NDVIomitNA2022, FUN = mean)
+summary(NDVI_doy)
 
 #Save graph of the average daily NDVI values for all years and land cover type (y) by the day of the year (x) as png.
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png", unit="in", height = 5, width = 10, res = 300)
@@ -42,7 +50,7 @@ NDVI_doy$year <- factor(NDVI_doy$year)
 
 #Save graph of the yearly average daily NDVI values for all land cover types (y) by the day of the year (x) as png.
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyByYearGraph.png", unit="in", height=5, width=10, res = 300)
-ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = year))
+ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = as.factor(year))) # CR added as.factor so it wasn't being treated as a continuous variable
 dev.off()
 
 library(zoo)
@@ -72,7 +80,7 @@ MinNDVI.allbyDate <- min(NDVI_doy$NDVI, na.rm=TRUE)
 NDVI.allbyDateRange <- max(NDVI_doy$NDVI, na.rm=TRUE)-min(NDVI_doy$NDVI, na.rm=TRUE)
 
 #Create an aggregate of the cleaned NDVI data.
-AggNDVI.all$ma <-moving_average(AggNDVI.all$`ndvi.all$NDVI`, 5)
+# AggNDVI.all$ma <-moving_average(AggNDVI.all$`ndvi.all$NDVI`, 5)
 
 #Plot the aggregate of the cleaned NDVI data.
 plot((AggNDVI.all$ma))
