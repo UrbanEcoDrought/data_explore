@@ -33,14 +33,16 @@ plot(NDVI_doy)
 NDVI_doy <- aggregate(NDVI ~ doy + year, data = NDVIomitNA2022, FUN = mean)
 
 #Save graph of the average daily NDVI values for all years and land cover type (y) by the day of the year (x) as png.
-png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png", ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = year)))
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png", unit="in", height = 5, width = 10, res = 300)
+plot(NDVI_doy)
 dev.off()
 
 # Change each year line in the graph to a different color
 NDVI_doy$year <- factor(NDVI_doy$year)
 
 #Save graph of the yearly average daily NDVI values for all land cover types (y) by the day of the year (x) as png.
-png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png",ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = year)))
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyByYearGraph.png", unit="in", height=5, width=10, res = 300)
+ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = year))
 dev.off()
 
 library(zoo)
