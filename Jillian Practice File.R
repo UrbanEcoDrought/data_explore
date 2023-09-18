@@ -130,3 +130,11 @@ ChicagolandSPINDVI <- merge (ChicagolandSPI, NDVIomitNA2022, by=c("date"), all.x
 
 # remove all NA values from dataframe (should be years before 2001)
 ChicagolandSPINDVINA <- na.omit(ChicagolandSPINDVI)
+
+# create basic linear model with NDVI as response variable and doy as predictor variable
+NDVImodel <- lm(NDVI ~ doy, data=NDVIomitNA2022)
+summary(NDVImodel)
+
+# create basic linear model with NDVI as response variable and doy and SPI 14 day as predictor variables
+SPINDVImodel <- lm(NDVI ~ doy + X14d.SPI, data = ChicagolandSPINDVINA)
+summary(SPINDVImodel)
