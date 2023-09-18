@@ -115,3 +115,18 @@ AggNDVI.all$ma <-moving_average(AggNDVI.all$`ndvi.all$NDVI`, 5)
 plot((AggNDVI.all$ma))
 plot(AggNDVI.all$`ndvi.all$NDVI`)
 
+# Setting the file paths. This may be different for your computer.
+Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+google.drive <- Sys.getenv("GOOGLE_DRIVE")
+
+# reading in Trent's SPI
+ChicagolandSPI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPI.csv"))
+
+# create column with date in ISO format
+ChicagolandSPI$date <- as.Date(ChicagolandSPI$Date, "%m/%d/%Y")
+
+# merge ChicagolandSPI and NDVIomitNA2022 by date columns
+ChicagolandSPINDVI <- merge (ChicagolandSPI, NDVIomitNA2022, by=c("date"), all.x=TRUE, all.y=TRUE)
+
+# remove all NA values from dataframe (should be years before 2001)
+ChicagolandSPINDVINA <- na.omit(ChicagolandSPINDVI)
