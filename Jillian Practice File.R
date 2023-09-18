@@ -1,11 +1,37 @@
-# 9/14/2023 Practice
-### From CR: Need to have scripted method for getting the data INTO R.  -- right now I don't know where ndvi.all is coming from.  shoudl have something like
-path.google <- "~/Google Drive/Shared drives/Urban Ecological Drought/" # This is the file path on a mac
-ndvi.all <- readRDS(file.path(path.google, "data/r_files/processed_files/landsat_ndvi_all.RDS")) # This lets me knwo exactly which file you're working with
-summary(ndvi.all) # Try using summary to double check the data rather than anythign like (view) --> view will be a nightmare with big data
+# I changed some of the data set object names to help me better understand what they are while I'm working. The line following "some orienting plots" returned the following message "Warning message:
+# Removed 931 rows containing non-finite values (`stat_smooth()`). Not sure if I messed it up renaming or if its a sources issue
+# Call Ross's script to explore NDVI time series for the land cover classes of the Chicago region
+library(ggplot2)
+library(lubridate)
+
+# Setting the file paths. This may be different for your computer.
+Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+google.drive <- Sys.getenv("GOOGLE_DRIVE")
+
+# reading in NDVI product
+ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
+head(ndvi.all)
+
+unique(ndvi.all$type)
+
+# create data set with only full years, so 2001-2022, cutting 2023
+ndvi.allFullYears <- ndvi.all[!ndvi.all$year %in% 2023,]
+
+# some orienting plots
+ggplot(data=ndvi.allFullYears[!ndvi.allFullYears$year %in% c(2005,2012),]) + facet_wrap(type~.) +
+  stat_smooth(aes(x=doy, y=NDVI)) +
+  geom_line(data=ndvi.allFullYears[ndvi.allFullYears$year %in% c(2005, 2012),], aes(x=doy, y=NDVI, col=as.factor(year)))
+
+
+# we do have duplicates in dates as the collections were taken by different satellites
+# running a brief script to take the average of the dates per cover type. Note: some of the measurements appear to be identical for replicate dates and others are close. Will take the mean for now
+
+
+ndvi.allAgg <- aggregate(NDVI~date + type + doy, FUN=mean, data=ndvi.all)
+head(ndvi.allAgg)
  
 #Create a new table object with NA values removed from data.
-NDVIomitNA <- na.omit(ndvi.all)
+NDVIomitNA <- na.omit(ndvi.allAgg)
 summary(NDVIomitNA)
 
 #Create a time series object with all NDVI data with NA values removed.
@@ -15,8 +41,6 @@ tsNDVIomitNA <- ts(NDVIomitNA, start=c(2001), frequency=366)
 ts.plot(tsNDVIomitNA)
 
 library(dplyr)
-library(lubridate)
-library(ggplot2)
 
 #Add month column to data table.
 NDVIomitNA<-mutate(NDVIomitNA, Month = month(NDVIomitNA$date))
@@ -37,20 +61,20 @@ summary(NDVI_doy)
 plot(NDVI_doy)
 
 #Aggregate points to get one NDVI per day of the year with year as another variable
-NDVI_doy <- aggregate(NDVI ~ doy + year, data = NDVIomitNA2022, FUN = mean)
-summary(NDVI_doy)
+NDVI_doyYear <- aggregate(NDVI ~ doy + Year, data = NDVIomitNA2022, FUN = mean)
+summary(NDVI_doyYear)
 
 #Save graph of the average daily NDVI values for all years and land cover type (y) by the day of the year (x) as png.
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png", unit="in", height = 5, width = 10, res = 300)
-plot(NDVI_doy)
+plot(NDVI_doyYear)
 dev.off()
 
 # Change each year line in the graph to a different color
-NDVI_doy$year <- factor(NDVI_doy$year)
+NDVI_doyYear$Year <- factor(NDVI_doyYear$Year)
 
 #Save graph of the yearly average daily NDVI values for all land cover types (y) by the day of the year (x) as png.
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyByYearGraph.png", unit="in", height=5, width=10, res = 300)
-ggplot() + geom_line(data = NDVI_doy, aes(x = doy, y = NDVI, color = as.factor(year))) # CR added as.factor so it wasn't being treated as a continuous variable
+ggplot() + geom_line(data = NDVI_doyYear, aes(x = doy, y = NDVI, color = as.factor(Year))) # CR added as.factor so it wasn't being treated as a continuous variable
 dev.off()
 
 library(zoo)
@@ -71,17 +95,23 @@ NDVI.allRange <- (max(ndvi.all$NDVI, na.rm=TRUE)-min(ndvi.all$NDVI, na.rm=TRUE))
 NDVI.allMean <- mean(ndvi.all$NDVI, na.rm=TRUE)
 
 #Create an object with the maximum NDVI for the average NDVI value for all land cover types for each date.
-MaxNDVI.allbyDate <- max(NDVI_doy$NDVI, na.rm=TRUE)
+MaxNDVI.allbyDate <- max(NDVI_doyYear$NDVI, na.rm=TRUE)
 
 #Create an object with the maximum NDVI for the average NDVI value for all land cover types for each date.
-MinNDVI.allbyDate <- min(NDVI_doy$NDVI, na.rm=TRUE)
+MinNDVI.allbyDate <- min(NDVI_doyYear$NDVI, na.rm=TRUE)
 
 #Create an object with the range between the MaxNDVI.allbyDate and MinNDVI.allbyDate.
-NDVI.allbyDateRange <- max(NDVI_doy$NDVI, na.rm=TRUE)-min(NDVI_doy$NDVI, na.rm=TRUE)
+NDVI.allbyDateRange <- max(NDVI_doyYear$NDVI, na.rm=TRUE)-min(NDVI_doyYear$NDVI, na.rm=TRUE)
+
+# Create function for moving average
+moving_average <- function(x, n = 5) {
+  stats::filter(x, rep(1 / n, n), sides = 2)
+}
 
 #Create an aggregate of the cleaned NDVI data.
-# AggNDVI.all$ma <-moving_average(AggNDVI.all$`ndvi.all$NDVI`, 5)
+AggNDVI.all$ma <-moving_average(AggNDVI.all$`ndvi.all$NDVI`, 5)
 
 #Plot the aggregate of the cleaned NDVI data.
 plot((AggNDVI.all$ma))
 plot(AggNDVI.all$`ndvi.all$NDVI`)
+
