@@ -131,6 +131,9 @@ ChicagolandSPINDVI <- merge (ChicagolandSPI, NDVIomitNA2022, by=c("date"), all.x
 # remove all NA values from dataframe (should be years before 2001)
 ChicagolandSPINDVINA <- na.omit(ChicagolandSPINDVI)
 
+#or create data frame from 2001-2022
+ChicagolandSPINDVI2001.2022 <- subset(ChicagolandSPINDVI, Year>="2001" & Year<="2022")
+
 # create basic linear model with NDVI as response variable and doy as predictor variable
 NDVImodel <- lm(NDVI ~ doy, data=NDVIomitNA2022)
 summary(NDVImodel)
@@ -138,3 +141,133 @@ summary(NDVImodel)
 # create basic linear model with NDVI as response variable and doy and SPI 14 day as predictor variables
 SPINDVImodel <- lm(NDVI ~ doy + X14d.SPI, data = ChicagolandSPINDVINA)
 summary(SPINDVImodel)
+
+# Exploring Seasonality Data Analysis
+# Load the required libraries
+install.packages(rio)
+library(ggplot2)
+library(forecast)
+library(tseries)
+library(tidyverse)
+library(rio)
+library(readxl)
+library(zoo)
+
+# Order data frame by Year and doy
+NDVIomitNA2022 <- NDVIomitNA2022[order(NDVIomitNA2022[,7], NDVIomitNA2022[,3]),]
+
+# Create time series object based on NDVI to pass to tsclean()
+count_TSNDVIomitNA2022 <- ts(NDVIomitNA2022[, c('NDVI')])
+
+# tsclean function to clean data
+NDVIomitNA2022$cleanNDVI <- tsclean(count_TSNDVIomitNA2022)
+
+# Create biweekly moving average
+NDVIomitNA2022$NDVI_ma14 <- ma(NDVIomitNA2022$NDVI, order = 14)
+
+# Create monthly moving average
+NDVIomitNA2022$NDVI_ma30 <- ma(NDVIomitNA2022$NDVI, order = 30)
+
+#replace all numeric NAs with column mean
+NDVIomitNA2022a <- replace(NDVIomitNA2022, TRUE, lapply(NDVIomitNA2022, na.aggregate))
+
+#plot NDVI, 14 day moving average of NDVI and 30 day average of NDVI
+ggplot() + geom_line(data = NDVIomitNA2022a, aes(x = doy, y = NDVI, colour = 'NDVI'))
++ geom_line(data = NDVIomitNA2022a, aes(x = doy, y = NDVI_ma14, colour = 'NDVI_ma14'))
++ geom_line(data = NDVIomitNA2022a, aes(x = doy, y = NDVI_ma30, colour = 'NDVI_ma30')) 
++ ylab('NDVI')
+
+# Working with Ross's detrended NDVI
+
+# script to detrend NDVI time series for the land cover classes of the chicago reigon
+library(ggplot2)
+library(lubridate)
+library(dplR) # tree ring package I like to use to explore detrending sometimes
+# Setting the file paths. This may be different for your computer.
+Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+google.drive <- Sys.getenv("GOOGLE_DRIVE")
+
+month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+                           month = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
+                                 month = c("Jan", "Apr", "Jul", "Oct"))
+
+
+# reading in NDVI product
+ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
+head(ndvi.all)
+
+
+
+
+# calculating mean time series fro each land cover type
+# using all years available to calculate the mean
+unique(ndvi.all$type)
+
+ndvi.mean <- aggregate(NDVI~doy + type, FUN=mean, data=ndvi.all, na.rm=T)
+head(ndvi.mean)
+
+
+# calculating 95% CI to have for now
+ndvi.mean[,"UB"] <- aggregate(NDVI~doy+type, FUN=quantile, prob=0.975, data=ndvi.all)[3] # taking the third column can creating a new variable in the ndvi.mean datframe
+ndvi.mean[,"LB"] <- aggregate(NDVI~doy+type, FUN=quantile, prob=0.025, data=ndvi.all)[3] # taking the third column can creating a new variable in the ndvi.mean datframe
+ndvi.mean[,"VAR"] <- aggregate(NDVI~doy+type, FUN=var, data=ndvi.all)[3]
+names(ndvi.mean) <- c("doy", "type", "ndvi.mean", "UB", "LB", "VAR") # renaming variables to not be confusing later
+head(ndvi.mean)
+
+
+# plotting up mean NDVI time series with CI ribbon
+ggplot(data=ndvi.mean) + facet_wrap(type~.) +
+  geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+  geom_line(aes(x=doy, y=ndvi.mean)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  theme_bw()
+
+# plotting the variance just to see something
+# The 'something': Just a ton of noise early in the year and late in the year. RA: I think we might be hitting detection limits of the sensor. Looking at maybe March-ish as the start time. Would like to check with Trent about how early we could be in drought.
+# before truncating the series, lets see how things correlate with the met data early in the year.
+ggplot(data=ndvi.mean) + facet_wrap(type~.) +
+  # geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+  geom_line(aes(x=doy, y=VAR)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  theme_bw()
+
+# seeing if removing the drought years 2005 and 2012 reduces noise in variance
+# creating new NDVI data frame without drought years
+ndvi.nonDrought <-  ndvi.all[!ndvi.all$year %in% 2012,]
+ndvi.nonDrought <-  ndvi.all[!ndvi.all$year %in% 2023,]
+ndvi.nonDrought <-  ndvi.all[!ndvi.all$year %in% 2005,]
+
+
+# using nondrought years to create mean
+ndviNonDrought.mean <- aggregate(NDVI~doy + type, FUN=mean, data=ndvi.nonDrought, na.rm=T)
+
+#  calculating 95% CI to have for nondrought years
+ndviNonDrought.mean[,"UB"] <- aggregate(NDVI~doy+type, FUN=quantile, prob=0.975, data=ndvi.nonDrought)[3]
+ndviNonDrought.mean[,"LB"] <- aggregate(NDVI~doy+type, FUN=quantile, prob=0.025, data=ndvi.nonDrought)[3]
+ndviNonDrought.mean[,"VAR"] <- aggregate(NDVI~doy+type, FUN=var, data=ndvi.nonDrought)[3]
+names(ndviNonDrought.mean) <- c("doy", "type", "ndvi.mean", "UB", "LB", "VAR")
+
+#plotting CI of nondrought years
+ggplot(data=ndvi.mean) + facet_wrap(type~.) +
+  +     geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+  +     geom_line(aes(x=doy, y=VAR)) +
+  +     scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  +     theme_bw()
+
+# plotting Variance of nondrought years
+#> ggplot(data=ndviNonDrought.mean) + facet_wrap(type~.) +
++     #geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+  +     geom_line(aes(x=doy, y=VAR)) +
+  +     scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  +     theme_bw()
+
+# merge data sets to compare variances
+NDVIbothVAR <- merge (ndvi.mean, ndviNonDrought.mean, by=c("doy"), all.x=TRUE, all.y=TRUE)
+
+# calculate difference between variance between all years and nondrought years
+NDVIbothVAR$DiffVAR <- NDVIbothVAR$VAR.x - NDVIbothVAR$VAR.y
+
+# view the data set by descending order of the difference in variance column and notice corresponding days of the year
+# not sure if this has any value, but it was my first inclination to examine the cause of the variance noise
+
