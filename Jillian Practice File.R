@@ -250,17 +250,17 @@ names(ndviNonDrought.mean) <- c("doy", "type", "ndvi.mean", "UB", "LB", "VAR")
 
 #plotting CI of nondrought years
 ggplot(data=ndvi.mean) + facet_wrap(type~.) +
-  +     geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
-  +     geom_line(aes(x=doy, y=VAR)) +
-  +     scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
-  +     theme_bw()
+ #geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+ geom_line(aes(x=doy, y=VAR)) +
+ scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+theme_bw()
 
 # plotting Variance of nondrought years
-#> ggplot(data=ndviNonDrought.mean) + facet_wrap(type~.) +
-+     #geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
-  +     geom_line(aes(x=doy, y=VAR)) +
-  +     scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
-  +     theme_bw()
+ggplot(data=ndviNonDrought.mean) + facet_wrap(type~.) +
+   #geom_ribbon(aes(x=doy, ymin=LB, ymax=UB), alpha=0.5) +
+     geom_line(aes(x=doy, y=VAR)) +
+    scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+    theme_bw()
 
 # merge data sets to compare variances
 NDVIbothVAR <- merge (ndvi.mean, ndviNonDrought.mean, by=c("doy"), all.x=TRUE, all.y=TRUE)
@@ -271,3 +271,136 @@ NDVIbothVAR$DiffVAR <- NDVIbothVAR$VAR.x - NDVIbothVAR$VAR.y
 # view the data set by descending order of the difference in variance column and notice corresponding days of the year
 # not sure if this has any value, but it was my first inclination to examine the cause of the variance noise
 
+# Explore basic linear model without drought years
+# Create data frame with SPI and NDVI data without 2005 or 2012
+SPINDVInondrought <- ChicagolandSPINDVINA[!ChicagolandSPINDVINA$Year %in% 2012,]
+SPINDVInondrought <- ChicagolandSPINDVINA[!ChicagolandSPINDVINA$Year %in% 2005,]
+
+# create basic linear model for NDVI and 14 day SPI without drought years
+SPINDVINondroughtModel <- lm(formula = NDVI ~ doy + X14d.SPI, data = SPINDVInondrought)
+
+#Nondrought years lm showed greater SPI coefficient and p-value while f-statistic was greater on nondrought model
+
+
+# NDVI anomalies calculation from Ross----
+
+# merging in the mean series into the ndvi.all data frame
+ndvi.all2 <- merge(ndvi.all, ndvi.mean[,c("ndvi.mean", "doy", "type")], by=c("type", "doy"), all=T)
+summary(ndvi.all2)    
+
+# subtracting the mean series from the raw series
+ndvi.all2$anomaly.mean <- ndvi.all2$NDVI - ndvi.all2$ndvi.mean
+
+# saving this output
+#> saveRDS(ndvi.all2, file = file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
+
+# plotting to check that we have true anomaly series
+# should be zero centered
+
+ggplot(data=ndvi.all2) + facet_wrap(type~.)+
+  geom_hline(yintercept=0, linetype="dashed") +
+  geom_line(aes(x=date, y=anomaly.mean))
+
+ggplot(data=ndvi.all2[ndvi.all2$year %in% c(2005, 2012),]) + facet_grid(year~type)+
+  geom_hline(yintercept=0, linetype="dashed") +
+  geom_line(aes(x=doy, y=anomaly.mean)) +
+  # scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  theme_bw()
+
+
+
+################################
+# Fancy detrending----
+
+# christy mentioned that there may be issues among the different satellites in terms of their sensitivity regarding NDVI
+# to overcome this we want to account for some of that variance in the calculation of the mean (see above, where we have stepwise changes as years go by)
+
+library(mgcv)
+
+# enter Generalized additive mixed models
+
+summary(ndvi.all2)
+
+# setting up a gamm with land cover type as a fixed effect and the satellites as a random effect
+# fitting a spline by day of year
+ndvi.gamm <- gamm(NDVI ~ type + s(doy), random=list(satellite=~1), data=ndvi.all2, na.rm=T)
+summary(ndvi.gamm)
+ndvi.gamm
+
+# creating placeholder dataframe because we were running into NA issues
+ndvi.all.hold <- ndvi.all2[!is.na(ndvi.all2$NDVI),]
+
+ndvi.all.hold$gamm.pred<- predict(ndvi.gamm, na.rm=T)
+#Error in UseMethod("predict") : no applicable method for 'predict' applied to an object of class "c('gamm', 'list')"
+
+ndvi.all.hold$anomaly.gamm <- ndvi.all.hold$NDVI - ndvi.all.hold$gamm.pred
+#Error in `$<-.data.frame`(`*tmp*`, anomaly.gamm, value = numeric(0)) : replacement has 0 rows, data has 15819
+
+# merging placeholder data frame into the ndvi.all2 data frame
+ndvi.all3 <- merge(ndvi.all2, ndvi.all.hold, all=T)
+summary(ndvi.all3)
+# wanting to see if the model really fit differently for each land cover type
+ggplot(data=ndvi.all3) +
+  geom_density(aes(x=gamm.pred, col=type))
+#Error in `geom_density()`:
+#! Problem while computing aesthetics.
+#ℹ Error occurred in the 1st layer.
+#Caused by error:
+#  ! object 'gamm.pred' not found
+#Run `rlang::last_trace()` to see where the error occurred.
+
+# kept running into errors so I abandoned that
+
+# create correlation for 14 d SPI and NDVI for 2001-2021 [0.029541]
+X14dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI)
+
+# create correlation for 30 d SPI and NDVI for 2001-2021 [0.051494]
+X30dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI)
+
+# create correlation for 60 d SPI and NDVI for 2001-2021 [0.052925]
+X60dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI)
+
+# create correlation for 90 d SPI and NDVI for 2001-2021 [0.068489]
+X90dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI)
+
+# create correlation for 14 d SPI/doy and NDVI for 2001-2021 [0.010609]
+X14dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$Day)
+
+# create correlation for 30 d SPI/doy and NDVI for 2001-2021 [0.012828]
+X30dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$Day)
+
+# create correlation for 60 d SPI/doy and NDVI for 2001-2021 [0.012985]
+X60dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$Day)
+
+# create correlation for 90 d SPI/doy and NDVI for 2001-2021 [0.014448]
+X90dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$Day)
+
+# greatest correlation using 90 day SPI without doy but still low
+
+# create covariance for 14 d SPI and NDVI for 2001-2021 [0.029541]
+X14dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI)
+
+# create covariance for 30 d SPI and NDVI for 2001-2021 [0.051494]
+X30dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI)
+
+# create covariance for 60 d SPI and NDVI for 2001-2021 [0.052925]
+X60dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI)
+
+# create covariance for 90 d SPI and NDVI for 2001-2021 [0.068489]
+X90dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI)
+
+# create covariance for 14 d SPI/doy and NDVI for 2001-2021 [0.010609]
+X14dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$Day)
+
+# create covariance for 30 d SPI/doy and NDVI for 2001-2021 [0.012828]
+X30dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$Day)
+
+# create covariance for 60 d SPI/doy and NDVI for 2001-2021 [0.012985]
+X60dSPINDVIdoycov <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$Day)
+
+# create covariance for 90 d SPI/doy and NDVI for 2001-2021 [0.014448]
+X90dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$Day)
+
+cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$doy)
+
+cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$Year)
