@@ -100,15 +100,27 @@ ndvi.gamm
 # creating placeholder dataframe because we were running into NA issues
 ndvi.all.hold <- ndvi.all2[!is.na(ndvi.all2$NDVI),]
 
-ndvi.all.hold$gamm.pred<- predict(ndvi.gamm$gam) # this will predict the fixed effects only. The $gamm addition solves the version issue we were running into earlier.
-ndvi.all.hold$anomaly.gamm <- ndvi.all.hold$NDVI - ndvi.all.hold$gamm.pred
+ndvi.all.hold$ndvi.gamm<- predict(ndvi.gamm$gam) # this will predict the fixed effects only. The $gamm addition solves the version issue we were running into earlier.
+ndvi.all.hold$anomaly.gamm <- ndvi.all.hold$NDVI - ndvi.all.hold$ndvi.gamm
 
+# setting up a double detrending method where we take the gamm output that had a spline on doy by satellite and now we have a spline on doy by land cover type
+# this shoul dhelp ups pick up a bit of the off season noise AND get some of the amplitude.
+
+ndvi.gamm.type <- gam(anomaly.gamm~s(doy, k=12, by=type), data=ndvi.all.hold, na.rm=T)
+ndvi.all.hold$double.pred <- predict(ndvi.gamm.type)
+
+ndvi.all.hold$ndvi.double <- ndvi.all.hold$ndvi.gamm + ndvi.all.hold$double.pred
+
+# creatign double detrend anomalies
+ndvi.all.hold$anomaly.double <- ndvi.all.hold$NDVI-ndvi.all.hold$double.detrend.ndvi
+
+head(ndvi.all.hold)
 # merging placeholder data frame into the ndvi.all2 data frame
 ndvi.all3 <- merge(ndvi.all2, ndvi.all.hold, all=T)
 summary(ndvi.all3)
 # wanting to see if the model really fit differently for each land cover type
 ggplot(data=ndvi.all3) +
-  geom_density(aes(x=gamm.pred, col=type))
+  geom_density(aes(x=ndvi.gamm, col=type))
 
 # plotting the raw and the gamm prediction over top of one another
 # still seem to be some off sets
@@ -116,22 +128,104 @@ ggplot(data=ndvi.all3) +
 # The gamm misses a bit on the low end, but this might work as a sort of pseudo log transformation where the low values are emphasized a bit more in the detrending. So we'd be more sensitive to picking up low-greenness periods.
 ggplot(data=ndvi.all3) + facet_wrap(type~.) +
   # geom_line(aes(x=date, y=NDVI)) +
-  geom_line(aes(x=date, y=ndvi.mean, col="mean detrended"), alpha=0.5)+
-  geom_line(aes(x=date, y=gamm.pred, col="gamm detrended")) +
-  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple"))
+  geom_line(aes(x=date, y=ndvi.mean, col="mean detrended"))+
+  geom_line(aes(x=date, y=ndvi.gamm, col="gamm detrended")) +
+  geom_line(aes(x=date, y=double.detrend.ndvi, col="double detrended"))+
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple", "double detrended" = "orange3"))+
+  labs(y = "Modeled NDVI", x = "Date") +
+  theme_bw()
 
 # plotting residuals
 ggplot(data=ndvi.all3) + facet_wrap(type~.) +
-  geom_hline(yintercept=0, linetype="dashed", col="forestgreen") +
-  geom_line(aes(x=date, y=anomaly.gamm))
+  geom_hline(yintercept=0, linetype="dashed") +
+  geom_line(aes(x=date, y=anomaly.mean, col="mean detrended"))+
+  geom_line(aes(x=date, y=anomaly.gamm, col="gamm detrended")) +
+  geom_line(aes(x=date, y=anomaly.double, col="double detrended"))+
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple", "double detrended" = "orange3"))+
+  labs(y = "NDVI Anomaly", x = "Date") +
+  theme_bw()
 
 # looking at 2005 and 2012
 ggplot(data=ndvi.all3[ndvi.all3$year %in% c(2005, 2012),]) + facet_grid(year~type)+
   geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(x=doy, y=anomaly.gamm)) +
+  geom_line(aes(x=doy, y=anomaly.mean, col="mean detrended"))+
+  geom_line(aes(x=doy, y=anomaly.gamm, col="gamm detrended")) +
+  geom_line(aes(x=doy, y=anomaly.double, col="double detrended"))+
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple", "double detrended" = "orange3"))+
+  labs(y = "NDVI Anomaly", x = "Day of Year") +
+  theme_bw() +
   scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks.short$doy, labels = month.breaks.short$month) +
   theme_bw()
 
 
+# graphing the predicted vs. observed
+ggplot(data=ndvi.all3) +
+  geom_point(aes(x=NDVI, y = ndvi.mean, col="mean detrended"), alpha = .6) +
+  geom_point(aes(x=NDVI, y = ndvi.gamm, col="gamm detrended"), alpha = .6) +
+  geom_point(aes(x= NDVI, y=ndvi.double, col="double detrended"), alpha = .6)+
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple", "double detrended" = "orange3"))+
+  geom_abline(slope=1, intercept = 0) +
+  labs(y = "NDVI Modeled", x = "NDVI Observed") +
+  theme_bw()
+
+ggplot(data=ndvi.all3) +
+  geom_point(aes(x=doy, y = anomaly.mean, col="mean detrended"), alpha = .6) +
+  geom_point(aes(x=doy, y = anomaly.gamm, col="gamm detrended"), alpha = .6) +
+  geom_point(aes(x= doy, y=anomaly.double, col="double detrended"), alpha = .6)+
+  geom_hline(yintercept = 0, linetype="dashed") +
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple", "double detrended" = "orange3"))+
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
+  theme_bw()
+
+
 # saving output with everything
-saveRDS(ndvi.all3, file = file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
+# saveRDS(ndvi.all3, file = file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
+
+
+
+########################
+# Checking order of operations on double detrending
+# want to see if the order of steps for the double detrending matters
+
+# in this orientation we account for land cover first and then correct for satelite eccentricities
+# 09/21/2023 As of now this seems like the method we should use.
+
+ndvi.order <- ndvi.all3
+
+ndvi.order.gamm <- gamm(NDVI ~ type + s(doy, k=12, by=type), random=list(satellite=~1), data=ndvi.order, na.rm=T)
+
+summary(ndvi.order.gamm)
+ndvi.order.gamm
+
+# creating placeholder dataframe because we were running into NA issues
+ndvi.order.hold <- ndvi.order[!is.na(ndvi.order$NDVI),]
+
+ndvi.order.hold$ndvi.flip.gamm<- predict(ndvi.order.gamm$gam) # this will predict the fixed effects only. The $gamm addition solves the version issue we were running into earlier.
+ndvi.order.hold$flip.gamm.anomaly <- ndvi.order.hold$NDVI-ndvi.order.hold$ndvi.flip.gamm
+
+ndvi.order.gamm.sat <- gam(flip.gamm.anomaly~s(doy, k=12, by=satellite), data=ndvi.order.hold, na.rm=T)
+ndvi.order.hold$double.order.pred <- predict(ndvi.order.gamm.sat)
+
+ndvi.order.hold$ndvi.flip.double <- ndvi.order.hold$ndvi.flip.gamm + ndvi.order.hold$double.order.pred
+
+# creatign double detrend anomalies
+ndvi.order.hold$anomaly.flipdouble <- ndvi.order.hold$NDVI-ndvi.order.hold$ndvi.flip.double
+
+head(ndvi.order.hold)
+
+ndvi.check.all <- merge(ndvi.order.hold, ndvi.all3)
+
+ggplot(data=ndvi.check.all) +
+    geom_point(aes(x=anomaly.double, y = anomaly.flipdouble))+
+  geom_abline(slope = 1, intercept = 0) +
+  theme_bw()
+
+
+# parsing down data frame and saving
+
+summary(ndvi.check.all)
+
+ndvi.detrend <- ndvi.check.all[,c("year", "doy", "type", "date", "NDVI", "anomaly.flipdouble", "ndvi.flip.double")]
+names(ndvi.detrend) <- c("year", "doy", "type", "date", "ndvi.obs", "ndvi.modeled.anomaly", "ndvi.modeled")
+
+saveRDS(ndvi.detrend, file = file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
