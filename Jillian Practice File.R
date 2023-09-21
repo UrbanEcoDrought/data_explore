@@ -364,16 +364,16 @@ X60dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI)
 X90dSPINDVIcor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI)
 
 # create correlation for 14 d SPI/doy and NDVI for 2001-2021 [0.010609]
-X14dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$Day)
+X14dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$doy)
 
 # create correlation for 30 d SPI/doy and NDVI for 2001-2021 [0.012828]
-X30dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$Day)
+X30dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$doy)
 
 # create correlation for 60 d SPI/doy and NDVI for 2001-2021 [0.012985]
-X60dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$Day)
+X60dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$doy)
 
 # create correlation for 90 d SPI/doy and NDVI for 2001-2021 [0.014448]
-X90dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$Day)
+X90dSPINDVIdoycor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$doy)
 
 # greatest correlation using 90 day SPI without doy but still low
 
@@ -390,17 +390,45 @@ X60dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI)
 X90dSPINDVIcov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI)
 
 # create covariance for 14 d SPI/doy and NDVI for 2001-2021 [0.010609]
-X14dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$Day)
+X14dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$doy)
 
 # create covariance for 30 d SPI/doy and NDVI for 2001-2021 [0.012828]
-X30dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$Day)
+X30dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$doy)
 
 # create covariance for 60 d SPI/doy and NDVI for 2001-2021 [0.012985]
-X60dSPINDVIdoycov <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$Day)
+X60dSPINDVIdoycov <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$doy)
 
-# create covariance for 90 d SPI/doy and NDVI for 2001-2021 [0.014448]
-X90dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$Day)
+# create covariance for 90 d SPI/doy and NDVI for 2001-2021 
+X90dSPINDVIdoycov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$doy)
 
 cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$doy)
 
 cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$Year)
+
+# Change Land Cover type from factor to numeric
+ChicagolandSPINDVINA$NumericType <- as.numeric(as.factor(ChicagolandSPINDVINA$type))
+
+# create correlation for 14 d SPI/doy/type and NDVI for 2001-2021 
+X14dSPINDVIdoyLandCovercor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create correlation for 30 d SPI/doy/type and NDVI for 2001-2021
+X30dSPINDVIdoyLandCovercor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create correlation for 60 d SPI/doy/type and NDVI for 2001-2021 
+X60dSPINDVIdoyLandCovercor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create correlation for 90 d SPI/doy/type and NDVI for 2001-2021
+X90dSPINDVIdoyLandCovercor <- cor(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create covariance for 14 d SPI/doy/type and NDVI for 2001-2021 
+X14dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X14d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create covariance for 30 d SPI/doy/type and NDVI for 2001-2021 
+X30dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X30d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create covariance for 60 d SPI/doy/type and NDVI for 2001-2021 
+X60dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X60d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
+# create covariance for 90 d SPI/doy/type and NDVI for 2001-2021 
+X90dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
+
