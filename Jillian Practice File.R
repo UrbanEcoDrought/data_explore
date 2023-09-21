@@ -432,3 +432,31 @@ X60dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVIN
 # create covariance for 90 d SPI/doy/type and NDVI for 2001-2021 
 X90dSPINDVIdoyLandCovercov <- cov(ChicagolandSPINDVINA$NDVI, ChicagolandSPINDVINA$X90d.SPI + ChicagolandSPINDVINA$doy + ChicagolandSPINDVINA$NumericType)
 
+# Change Land Cover type from factor to numeric for dataframe with SPI and NDVI in nondrought years
+SPINDVInondrought$NumericType <- as.numeric(as.factor(SPINDVInondrought$type))
+
+# create correlation object for 14 d SPI/doy/type and NDVI for nondrought years
+X14dSPINDVIdoyLandCoverNondroughtcor <- cor(SPINDVInondrought$NDVI, SPINDVInondrought$X14d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create correlation object for 30 d SPI/doy/type and NDVI for nondrought years
+X30dSPINDVIdoyLandCoverNondroughtcor <- cor(SPINDVInondrought$NDVI, SPINDVInondrought$X30d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create correlation object for 60 d SPI/doy/type and NDVI for nondrought years
+X60dSPINDVIdoyLandCoverNondroughtcor <- cor(SPINDVInondrought$NDVI, SPINDVInondrought$X60d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create correlation object for 90 d SPI/doy/type and NDVI for nondrought years
+X90dSPINDVIdoyLandCoverNondroughtcor <- cor(SPINDVInondrought$NDVI, SPINDVInondrought$X90d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+
+# create covariance object for 14 d SPI/doy/type and NDVI for nondrought years
+X14dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondrought$X14d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create covariance object for 30 d SPI/doy/type and NDVI for nondrought years
+X30dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondrought$X30d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create covariance object for 60 d SPI/doy/type and NDVI for nondrought years
+X60dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondrought$X60d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
+# create covariance object for 90 d SPI/doy/type and NDVI for nondrought years
+X90dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondrought$X90d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
+
