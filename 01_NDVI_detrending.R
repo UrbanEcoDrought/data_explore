@@ -115,8 +115,9 @@ ggplot(data=ndvi.all3) +
 # The gamm misses a bit on the low end, but this might work as a sort of pseudo log transformation where the low values are emphasized a bit more in the detrending. So we'd be more sensitive to picking up low-greenness periods.
 ggplot(data=ndvi.all3) + facet_wrap(type~.) +
   # geom_line(aes(x=date, y=NDVI)) +
-  geom_line(aes(x=date, y=ndvi.mean), col="forestgreen", alpha=0.5)+
-  geom_line(aes(x=date, y=gamm.pred), col="purple")
+  geom_line(aes(x=date, y=ndvi.mean, col="mean detrended"), alpha=0.5)+
+  geom_line(aes(x=date, y=gamm.pred, col="gamm detrended")) +
+  scale_color_manual(values = c("mean detrended" = "forestgreen", "gamm detrended" = "purple"))
 
 # plotting residuals
 ggplot(data=ndvi.all3) + facet_wrap(type~.) +
