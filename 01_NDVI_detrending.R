@@ -92,14 +92,15 @@ summary(ndvi.all2)
 
 # setting up a gamm with land cover type as a fixed effect and the satellites as a random effect
 # fitting a spline by day of year
-ndvi.gamm <- gamm(NDVI ~ type + s(doy, k=12), random=list(satellite=~1), data=ndvi.all2, na.rm=T)
+ndvi.gamm <- gamm(NDVI ~ type + s(doy, k=12, by=satellite), random=list(satellite=~1), data=ndvi.all2, na.rm=T)
+
 summary(ndvi.gamm)
 ndvi.gamm
 
 # creating placeholder dataframe because we were running into NA issues
 ndvi.all.hold <- ndvi.all2[!is.na(ndvi.all2$NDVI),]
 
-ndvi.all.hold$gamm.pred<- predict(ndvi.gamm, na.rm=T)
+ndvi.all.hold$gamm.pred<- predict(ndvi.gamm$gam) # this will predict the fixed effects only. The $gamm addition solves the version issue we were running into earlier.
 ndvi.all.hold$anomaly.gamm <- ndvi.all.hold$NDVI - ndvi.all.hold$gamm.pred
 
 # merging placeholder data frame into the ndvi.all2 data frame
