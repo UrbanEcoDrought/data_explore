@@ -1,4 +1,4 @@
-# script to explore NDVI time series for the land cover classes of the chicago reigon
+# script to explore NDVI time series for the land cover classes of the Chicago region
 library(ggplot2)
 library(lubridate)
 
