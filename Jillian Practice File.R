@@ -460,3 +460,37 @@ X60dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondr
 # create covariance object for 90 d SPI/doy/type and NDVI for nondrought years
 X90dSPINDVIdoyLandCoverNondroughtcov <- cov(SPINDVInondrought$NDVI, SPINDVInondrought$X90d.SPI + SPINDVInondrought$doy + SPINDVInondrought$NumericType)
 
+# Determining AICc
+# Review previously created basic linear model of NDVI, doy and 14d SPI
+summary(SPINDVImodel)
+
+# Rename model for clarification
+SPINDVI14dModel <-SPINDVImodel
+
+# Create linear models for 30, 60 and 90 day SPI data
+SPINDVI30dModel <- lm(formula = NDVI ~ doy + X30d.SPI, data = ChicagolandSPINDVINA)
+SPINDVI60dModel <- lm(formula = NDVI ~ doy + X60d.SPI, data = ChicagolandSPINDVINA)
+SPINDVI90dModel <- lm(formula = NDVI ~ doy + X90d.SPI, data = ChicagolandSPINDVINA)
+
+# Install and load AICcmodavg package
+install.packages("AICcmodavg")
+library(AICcmodavg)
+
+# Put all models into a list
+SPINDVImodels <- list(SPINDVI14dModel, SPINDVI30dModel, SPINDVI60dModel, SPINDVI90dModel)
+
+# Specify model names
+mod.names <- c('SPINDVI14dModel', 'SPINDVI30dModel', 'SPINDVI60dModel', 'SPINDVI90dModel')
+
+# Calculate the AIC of each model
+aictab(cand.set = SPINDVImodels, modnames = mod.names)
+
+# Model selection based on AICc:
+  
+#  K     AICc Delta_AICc AICcWt Cum.Wt      LL
+# SPINDVI90dModel 4 -3288.10       0.00   0.53   0.53 1648.05
+# SPINDVI30dModel 4 -3287.81       0.29   0.46   0.99 1647.91
+# SPINDVI60dModel 4 -3279.22       8.88   0.01   1.00 1643.61
+# SPINDVI14dModel 4 -3238.93      49.17   0.00   1.00 1623.47
+
+# Based off this model, using the 90 day SPI is the best fitting model. 
