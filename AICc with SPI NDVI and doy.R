@@ -78,13 +78,13 @@ install.packages("AICcmodavg")
 library(AICcmodavg)
 
 # Put all models into a list
-SPINDVImodels <- list(NDVIdoySPI14dmodel, NDVIdoySPI30dmodel, NDVIdoySPI60dmodel, NDVIdoySPI90dmodel)
+FYSPINDVImodels <- list(NDVIdoySPI14dmodel, NDVIdoySPI30dmodel, NDVIdoySPI60dmodel, NDVIdoySPI90dmodel)
 
 # Specify model names
-mod.names <- c('NDVIdoySPI14dmodel', 'NDVIdoySPI30dmodel', 'NDVIdoySPI60dmodel', 'NDVIdoySPI90dmodel')
+FYmod.names <- c('NDVIdoySPI14dmodel', 'NDVIdoySPI30dmodel', 'NDVIdoySPI60dmodel', 'NDVIdoySPI90dmodel')
 
 # Calculate the AIC of each model
-aictab(cand.set = SPINDVImodels, modnames = mod.names)
+aictab(cand.set = FYSPINDVImodels, modnames = FYmod.names)
 
 #Model selection based on AICc:
   
@@ -115,20 +115,20 @@ GSNDVIdoySPI90dmodel <- lm(formula = NDVI ~ doy + X90d.SPI, data = GrowSeasonSPI
 GSSPINDVImodels <- list(GSNDVIdoySPI14dmodel, GSNDVIdoySPI30dmodel, GSNDVIdoySPI60dmodel, GSNDVIdoySPI90dmodel)
 
 # Specify model names
-mod.names <- c('GSNDVIdoySPI14dmodel', 'GSNDVIdoySPI30dmodel', 'GSNDVIdoySPI60dmodel', 'GSNDVIdoySPI90dmodel')
+GSmod.names <- c('GSNDVIdoySPI14dmodel', 'GSNDVIdoySPI30dmodel', 'GSNDVIdoySPI60dmodel', 'GSNDVIdoySPI90dmodel')
 
 # Calculate the AIC of each model
-aictab(cand.set = GSSPINDVImodels, modnames = mod.names)
+aictab(cand.set = GSSPINDVImodels, modnames = GSmod.names)
 
 # Compare Full Year models with Grow Season models
 # Put all models into a list
 FYGSSPINDVImodels <- list(NDVIdoySPI14dmodel, NDVIdoySPI30dmodel, NDVIdoySPI60dmodel, NDVIdoySPI90dmodel, GSNDVIdoySPI14dmodel, GSNDVIdoySPI30dmodel, GSNDVIdoySPI60dmodel, GSNDVIdoySPI90dmodel)
 
 # Specify model names
-mod.names <- c('NDVIdoySPI14dmodel', 'NDVIdoySPI30dmodel', 'NDVIdoySPI60dmodel', 'NDVIdoySPI90dmodel', 'GSNDVIdoySPI14dmodel', 'GSNDVIdoySPI30dmodel', 'GSNDVIdoySPI60dmodel', 'GSNDVIdoySPI90dmodel')
+FYGSmod.names <- c('NDVIdoySPI14dmodel', 'NDVIdoySPI30dmodel', 'NDVIdoySPI60dmodel', 'NDVIdoySPI90dmodel', 'GSNDVIdoySPI14dmodel', 'GSNDVIdoySPI30dmodel', 'GSNDVIdoySPI60dmodel', 'GSNDVIdoySPI90dmodel')
 
 # Calculate the AIC of each model
-aictab(cand.set = FYGSSPINDVImodels, modnames = mod.names)
+aictab(cand.set = FYGSSPINDVImodels, modnames = FYGSmod.names)
 
 # Model selection based on AICc:
 
@@ -143,3 +143,37 @@ aictab(cand.set = FYGSSPINDVImodels, modnames = mod.names)
 # NDVIdoySPI14dmodel   4 -3238.93     843.17   0.00   1.00 1623.47
 
 # When comparing lm for full year and grow seasons, the best fit model is 60d SPI for the growing season
+
+# Create data set with only April and May
+AprMaySPINDVI <- ChicagolandSPINDVINA[which(ChicagolandSPINDVINA$Month %in% c(4:5)),]
+
+# create basic linear model with NDVI as response variable and doy and SPI 14 day as predictor variables
+AprMayNDVIdoySPI14dmodel <- lm(formula = NDVI ~ doy + X14d.SPI, data = AprMaySPINDVI)
+
+# create basic linear model with NDVI as response variable and doy and SPI 30 day as predictor variables
+AprMayNDVIdoySPI30dmodel <- lm(formula = NDVI ~ doy + X30d.SPI, data = AprMaySPINDVI)
+
+# create basic linear model with NDVI as response variable and doy and SPI 60 day as predictor variables
+AprMayNDVIdoySPI60dmodel <- lm(formula = NDVI ~ doy + X60d.SPI, data = AprMaySPINDVI)
+
+# create basic linear model with NDVI as response variable and doy and SPI 90 day as predictor variables
+AprMayNDVIdoySPI90dmodel <- lm(formula = NDVI ~ doy + X90d.SPI, data = AprMaySPINDVI)
+
+# Put all models into a list
+AprMaySPINDVImodels <- list(AprMayNDVIdoySPI14dmodel, AprMayNDVIdoySPI30dmodel, AprMayNDVIdoySPI60dmodel, AprMayNDVIdoySPI90dmodel)
+
+# Specify model names
+AprMaymod.names <- c('AprMayNDVIdoySPI14dmodel', 'AprMayNDVIdoySPI30dmodel', 'AprMayNDVIdoySPI60dmodel', 'AprMayNDVIdoySPI90dmodel')
+
+# Calculate the AIC of each model
+aictab(cand.set = GSSPINDVImodels, modnames = AprMaymod.names)
+
+# Compare Grow Season models with April/May models
+# Put all models into a list
+GSAprMaySPINDVImodels <- list(GSNDVIdoySPI14dmodel, GSNDVIdoySPI30dmodel, GSNDVIdoySPI60dmodel, GSNDVIdoySPI90dmodel, AprMayNDVIdoySPI14dmodel, AprMayNDVIdoySPI30dmodel, AprMayNDVIdoySPI60dmodel, AprMayNDVIdoySPI90dmodel)
+
+# Specify model names
+GSAprMaymod.names <- c('GSNDVIdoySPI14dmodel', 'GSNDVIdoySPI30dmodel', 'GSNDVIdoySPI60dmodel', 'GSNDVIdoySPI90dmodel', 'AprMayNDVIdoySPI14dmodel', 'AprMayNDVIdoySPI30dmodel', 'AprMayNDVIdoySPI60dmodel', 'AprMayNDVIdoySPI90dmodel')
+
+# Calculate the AIC of each model
+aictab(cand.set = GSAprMaySPINDVImodels, modnames = GSAprMaymod.names)
