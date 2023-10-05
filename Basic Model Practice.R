@@ -27,8 +27,29 @@ ChicagolandSPINDVI.all.NA <- na.omit(ChicagolandSPINDVI.all)
 head(ChicagolandSPINDVI.all.NA)
 summary(ChicagolandSPINDVI.all.NA)
 
-ChicagolandSPINDVI.all.NA$RESP <- ChicagolandSPINDVI.all.NA$ndvi.obs
-ChicagolandSPINDVI.all.NA$PRED <- ChicagolandSPINDVI.all.NA$X60d.SPI
+# reading in Trent's VPD data
+ChicagolandVPD <- read.csv(file.path(google.drive, "data/data_sets/Chicagoland_Daily_VPD.csv"))
+
+# create column with date in ISO format
+ChicagolandVPD$date <- as.Date(ChicagolandVPD$Date, "%m/%d/%Y")
+
+# merge ChicagolandVPD and ChicagolandSPINDVINA by date columns
+ChicagolandSPINDVIVPD.all <- merge (ChicagolandSPINDVI.all.NA, ChicagolandVPD, by=c("date"), all.x=TRUE, all.y=TRUE)
+
+# remove all NA values from dataframe (should be years before 2001)
+ChicagolandSPINDVIVPD.all.NA <- na.omit(ChicagolandSPINDVIVPD.all)
+head(ChicagolandSPINDVIVPD.all.NA)
+
+# Simplify column label to VPD
+colnames(ChicagolandSPINDVIVPD.all.NA)[14] = 'VPD'
+head(ChicagolandSPINDVIVPD.all.NA)
+
+# Remove unneeded columns
+ChicagolandSPINDVIVPD.all.NA <- ChicagolandSPINDVIVPD.all.NA[,-c(2,13)]
+head(ChicagolandSPINDVIVPD.all.NA)
+
+ChicagolandSPINDVIVPD.all.NA$RESP <- ChicagolandSPINDVIVPD.all.NA$ndvi.obs
+ChicagolandSPINDVIVPD.all.NA$PRED <- ChicagolandSPINDVIVPD.all.NA$X60d.SPI
 
 # Creating basic lme model
 mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=ChicagolandSPINDVI.all.NA[ChicagolandSPINDVI.all.NA$type=="forest"&ChicagolandSPINDVI.all.NA$doy==99,], na.action=na.omit)
