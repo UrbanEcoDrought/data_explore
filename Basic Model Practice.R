@@ -48,19 +48,36 @@ head(ChicagolandSPINDVIVPD.all.NA)
 ChicagolandSPINDVIVPD.all.NA <- ChicagolandSPINDVIVPD.all.NA[,-c(2,13)]
 head(ChicagolandSPINDVIVPD.all.NA)
 
+# Create response and predictor variable objects for modeling
 ChicagolandSPINDVIVPD.all.NA$RESP <- ChicagolandSPINDVIVPD.all.NA$ndvi.obs
 ChicagolandSPINDVIVPD.all.NA$PRED <- ChicagolandSPINDVIVPD.all.NA$X60d.SPI
 
 # Creating basic lme model
-mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=ChicagolandSPINDVI.all.NA[ChicagolandSPINDVI.all.NA$type=="forest"&ChicagolandSPINDVI.all.NA$doy==99,], na.action=na.omit)
+mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA[ChicagolandSPINDVIVPD.all.NA$type=="forest"&ChicagolandSPINDVIVPD.all.NA$doy==150,], na.action=na.omit)
 summary(mod.var)
 
 # Save mod.var as its own object
 mod.sum <- summary(mod.var)
 
+# using all possible days
+days.use <- unique(ChicagolandSPINDVIVPD.all.NA$doy[1:366])
+
+# set response variable
+vars.resp <- names(ChicagolandSPINDVIVPD.all.NA)[!names(ChicagolandSPINDVIVPD.all.NA) %in% c("date", "X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "year", "type", "doy", "year", "month", "VPD", "RESP", "PRED", "type.f")]
+
+# set predictor variable
+vars.pred <- names(ChicagolandSPINDVIVPD.all.NA)[!names(ChicagolandSPINDVIVPD.all.NA) %in% c("date", "year", "doy", "type", "ndvi.obs", "ndvi.modeled.anomaly", "ndvi.modeled", "RESP", "PRED", "type.f")]
+
+mod.out <- data.frame(doy=rep(days.use), 
+                      resp=rep(rep(vars.resp, each=length(days.use)), length.out=length(days.use)*length(vars.resp)*length(vars.pred)),
+                      pred=rep(vars.pred, each=length(days.use)*length(vars.resp)), 
+                      t.stat=NA, p.val=NA, r.sq.m=NA)
+
+mod.out$resp <- factor(mod.out$resp, levels=(vars.resp))
+mod.out$pred <- factor(mod.out$pred, levels=vars.pred)
+summary(mod.out)
+
 # Save our t-stat & pvalue for the climate predictor
 mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
 mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
 mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
-}
-
