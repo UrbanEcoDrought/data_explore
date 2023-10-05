@@ -25,3 +25,21 @@ head(ChicagolandSPINDVI.all)
 # remove all NA values from dataframe (should be years before 2001)
 ChicagolandSPINDVI.all.NA <- na.omit(ChicagolandSPINDVI.all)
 head(ChicagolandSPINDVI.all.NA)
+summary(ChicagolandSPINDVI.all.NA)
+
+ChicagolandSPINDVI.all.NA$RESP <- ChicagolandSPINDVI.all.NA$ndvi.obs
+ChicagolandSPINDVI.all.NA$PRED <- ChicagolandSPINDVI.all.NA$X60d.SPI
+
+# Creating basic lme model
+mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=ChicagolandSPINDVI.all.NA[ChicagolandSPINDVI.all.NA$type=="forest"&ChicagolandSPINDVI.all.NA$doy==99,], na.action=na.omit)
+summary(mod.var)
+
+# Save mod.var as its own object
+mod.sum <- summary(mod.var)
+
+# Save our t-stat & pvalue for the climate predictor
+mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
+mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
+mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
+}
+

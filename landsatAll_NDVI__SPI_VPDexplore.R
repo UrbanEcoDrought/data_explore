@@ -7,109 +7,13 @@ Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 # reading in NDVI product
-ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
+ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
 head(ndvi.all)
 
 unique(ndvi.all$type)
 
 # for now let's just look at full years, so cutting 2023
 ndvi.all <- ndvi.all[!ndvi.all$year %in% 2023,]
-
-# some orienting plots
-ggplot(data=ndvi.all[!ndvi.all$year %in% c(2005,2012),]) + facet_wrap(type~.) +
-  stat_smooth(aes(x=doy, y=NDVI)) +
-  geom_line(data=ndvi.all[ndvi.all$year %in% c(2005, 2012),], aes(x=doy, y=NDVI, col=as.factor(year)))
-
-
-# we do have duplicates in dates as the collections were taken by different satellites
-# running a brief script to take the average of the dates per cover type. Note: some of the measurements appear to be identical for replicate dates and others are close. Will take the mean for now
-
-
-ndvi.all2 <- aggregate(NDVI~date + type, FUN=mean, data=ndvi.all)
-head(ndvi.all2)
-
-# separating ndvi object into individual land-cover objects
-ndvi.crop <- ndvi.all2[ndvi.all2$type=="crop",]
-ndvi.forest <- ndvi.all2[ndvi.all2$type=="forest",]
-ndvi.grass <- ndvi.all2[ndvi.all2$type=="grassland",]
-ndvi.hi <- ndvi.all2[ndvi.all2$type=="urban-high",]
-ndvi.lo <- ndvi.all2[ndvi.all2$type=="urban-low",]
-ndvi.med <- ndvi.all2[ndvi.all2$type=="urban-medium",]
-ndvi.open <- ndvi.all2[ndvi.all2$type=="urban-open",]
-
-summary(ndvi.open)
-
-
-## Want to think about the above plot WRT creating an NDVI-anaomalies dataset
-# missing days may prove to be an issue
-
-# NDVI correlations----
-# creating a correlation matrix for NDVI
-# Crop and Forest
-ndvi.cor <- merge(ndvi.crop[,c("date", "NDVI")], ndvi.forest[,c("date", "NDVI")], by="date", all=T)
-summary(ndvi.cor)
-names(ndvi.cor) <- c("date", "crop", "forest")
-
-# adding grassland
-ndvi.cor2 <- merge(ndvi.cor, ndvi.grass[,c("date", "NDVI")], by="date", all=T)
-names(ndvi.cor2) <- paste(c(names(ndvi.cor),"grassland"))
-head(ndvi.cor2)
-
-# Adding medium urban
-ndvi.cor3 <- merge(ndvi.cor2, ndvi.med[,c("date", "NDVI")], by="date", all=T)
-names(ndvi.cor3) <- paste(c(names(ndvi.cor2),"urban.med"))
-head(ndvi.cor3)
-
-# adding med urban
-ndvi.cor4 <- merge(ndvi.cor3, ndvi.lo[,c("date", "NDVI")], by="date", all=T)
-names(ndvi.cor4) <- paste(c(names(ndvi.cor3),"urban.low"))
-head(ndvi.cor4)
-
-# Adding open urban
-ndvi.cor5 <- merge(ndvi.cor4, ndvi.open[,c("date", "NDVI")], by="date", all=T)
-names(ndvi.cor5) <- paste(c(names(ndvi.cor4),"urban.open"))
-head(ndvi.cor5)
-
-# Adding high urban
-ndvi.cor6 <- merge(ndvi.cor5, ndvi.hi[,c("date", "NDVI")], by="date", all=T)
-names(ndvi.cor6) <- paste(c(names(ndvi.cor5),"urban.hi"))
-head(ndvi.cor6)
-
-
-length(unique(ndvi.cor6$date))
-dim(ndvi.cor6)
-head(ndvi.cor6)
-tail(ndvi.cor6)
-
-ndvi.cor.mat <- as.matrix(ndvi.cor6[,!names(ndvi.cor6) %in% "date"])
-row.names(ndvi.cor.mat) <- paste(ndvi.cor6$date)
-
-cor.ndvi <- cor(ndvi.cor.mat, use="pairwise.complete.obs")
-# heatmap(cor.ndvi)
-
-cov.ndvi <- cov(ndvi.cor.mat, use="pairwise.complete.obs")
-# heatmap(cov.ndvi)
-
-# trying this presentation of correlation out for nowdata:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAC10lEQVR42u2W20vTYRjHva/+jQkSEzrQRdB9VwXdVEvYxAJnUSDzwlDotBZqTrYfLdq0aefVDMNp22JbOxVGB6OMrY3pclP7CSUTB7/s7f1OFmv+jtpV9MLD7/x8fu/zfp/neWtq/g86ahsd22p11gMqndVI7b5Kx/ioeVQ6ixP38AzvbBpUp2e2UodNO1rsYb0tkLjqmWIHItmVWy/nV/ujuR+93vRyh+s9q+n1J+qb7WG8u2Ew/nr7CVuobTCaevR6gXO/Zcndia9kID5ProfzhAnliBUWzJG+QI5cHs9wmr5Auq7JFsK3CkPIaPYZhuK3Y9nCk8lFcmdigdgopOfZLDE9zZKLY1lyYWymdDTSa5M3S654v5Su21yfCrtPO+PwIQumarTs39vqjD18lS8+frdI7NE50u1fc3beMyNo+AEYztuHk8Vdp/pj8CUKUzd0bUEYneHMEmAIHWZUdgQLJr6JgsvWeu/DEsILHQjPTsscN9yMphBGR2yuFKpqRxhyoUfMwRR8Ckp/Z4s94qYCwZr1+Gf/mFklUC60cyTDqZtvRHiVq9JaDuptwQTUeO15XnDNKocc6KEubwK+ecRivdTt+ciWZkfVKOSgekhBTzrfsCgO64G0gtCkLiLPIBS5QClouztZhG8eIONDBYEyxVJAaAhBz41Or8I33wxHHbRcoYLwiUUKGEp+Vwpkhsy+9DLKldIZCsHEQ0pF0+GaZFEbjQrWUAwmLhoqXY3Zn0Ah5kt4PqAUTDQtkJz1NElN49McCrHQOiqBiSZ+ubQd7Qumyt1ACCgHJlnayg0XBdfwYKog5EQuDG1KsniXG++eM4Mvzg5/LspxzKtM+i18yG7EKq21AU0Uf6kU9rsB6yzHFG8xEJLD5kC6cyTNSQskzeHdDW0xKpWLjZGabpAgb+QUTeQVWj1+wnCOe3im3uwmah2Y5lLVNtG3dk7v0Wd/BfRPjF/sOXqT33GGYwAAAABJRU5ErkJggg==
-# found here https://r-coder.com/correlation-plot-r/
-library(PerformanceAnalytics)
-
-chart.Correlation(ndvi.cor.mat, histogram = TRUE, method = "pearson")
-
-# Daily correlations----
-# wanting to look at a 'daily' correlation.
-# Will need to rewrite some code to generate a daily correlation
-
-# dont' want to have any NA's will get to complete cases here
-
-ndvi.all.cc <- ndvi.cor6
-ndvi.all.cc$doy <- yday(ndvi.all.cc$date)
-summary(ndvi.all.cc)
-
-ndvi.all.cc$year <- year(ndvi.all.cc$date)
-ndvi.all.cc$month <- month(ndvi.all.cc$date)
-
-summary(ndvi.all.cc)
 
 # reading in Trent's SPI
 ChicagolandSPI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPI.csv"))
@@ -121,7 +25,7 @@ ChicagolandSPI$date <- as.Date(ChicagolandSPI$Date, "%m/%d/%Y")
 ChicagolandSPINDVI.all.cc <- merge (ChicagolandSPI, ndvi.all.cc, by=c("date"), all.x=TRUE, all.y=TRUE)
 
 # remove all NA values from dataframe (should be years before 2001)
-ChicagolandSPINDVI.all.ccNA <- na.omit(ChicagolandSPINDVI.all.cc)
+ChicagolandSPINDVI.all.NA <- na.omit(ChicagolandSPINDVI.all.cc)
 
 # reading in Trent's VPD data
 ChicagolandVPD <- read.csv(file.path(google.drive, "data/data_sets/Chicagoland_Daily_VPD.csv"))
@@ -133,12 +37,12 @@ ChicagolandVPD$date <- as.Date(ChicagolandVPD$Date, "%m/%d/%Y")
 ChicagolandSPINDVIVPD.all.cc <- merge (ChicagolandSPINDVI.all.ccNA <- na.omit(ChicagolandSPINDVI.all.cc), ChicagolandVPD, by=c("date"), all.x=TRUE, all.y=TRUE)
 
 # remove all NA values from dataframe (should be years before 2001)
-ChicagolandSPINDVIVPD.all.ccNA <- na.omit(ChicagolandSPINDVIVPD.all.cc)
-head(ChicagolandSPINDVIVPD.all.ccNA)
+ChicagolandSPINDVI.all.ccNA <- na.omit(ChicagolandSPINDVIVPD.all.cc)
+head(ChicagolandSPINDVI.all.ccNA)
 
 # Simplify column label to VPD
-colnames(ChicagolandSPINDVIVPD.all.ccNA)[18] = 'VPD'
-head(ChicagolandSPINDVIVPD.all.ccNA)
+colnames(ChicagolandSPINDVI.all.ccNA)[18] = 'VPD'
+head(ChicagolandSPINDVI.all.ccNA)
 
 # Remove unneeded columns
 ChicagolandSPINDVIVPD.all.ccNA <- ChicagolandSPINDVIVPD.all.ccNA[,-c(2,17)]
@@ -147,8 +51,8 @@ head(ChicagolandSPINDVIVPD.all.ccNA)
 # limiting days use to March - september
 days.use <- unique(ChicagolandSPINDVIVPD.all.ccNA$doy[ndvi.all.cc$month >=3 & ndvi.all.cc$month <=9])
 vars.resp <- names(ChicagolandSPINDVIVPD.all.ccNA)[!names(ChicagolandSPINDVIVPD.all.ccNA) %in% c("date", "doy", "year", "month")] # set response variable
-vars.pred <- names(ChicagolandSPINDVIVPD.all.ccNA)[!names(ChicagolandSPINDVIVPD.all.ccNA) %in% c("date", "doy", "year", "month")] # set predictor variable; note will be the same fo rnow.
-
+vars.pred <- names(ChicagolandSPINDVIVPD.all.ccNA)[!names(ChicagolandSPINDVIVPD.all.ccNA) %in% c("date", "doy", "year", "month")] # set predictor variable
+  
 mod.out <- data.frame(doy=rep(days.use), 
                       resp=rep(rep(vars.resp, each=length(days.use)), length.out=length(days.use)*length(vars.resp)*length(vars.pred)),
                       pred=rep(vars.pred, each=length(days.use)*length(vars.resp)), 
@@ -360,6 +264,4 @@ PRGn5 <- c("#7b3294", "#c2a5cf", "gray50", "#a6dba0", "#008837")
 #  )
 #}
 #dev.off()
-
-
 
