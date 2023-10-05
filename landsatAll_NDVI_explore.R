@@ -4,6 +4,7 @@ library(lubridate)
 
 # Setting the file paths. This may be different for your computer.
 Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 # reading in NDVI product
@@ -113,8 +114,8 @@ summary(ndvi.all.cc)
 
 # limiting days use to March - september
 days.use <- unique(ndvi.all.cc$doy[ndvi.all.cc$month >=3 & ndvi.all.cc$month <=9])
-vars.resp <- names(ndvi.all.cc)[!names(ndvi.all.cc) %in% c("date", "doy", "year", "month")] # set response variable
-vars.pred <- names(ndvi.all.cc)[!names(ndvi.all.cc) %in% c("date", "doy", "year", "month")] # set predictor variable; note will be the same fo rnow.
+vars.resp <- names(ndvi.all.cc)[!names(ndvi.all.cc) %in% c("date", "doy", "year", "month")] # set response variable --> For Jillian, this would be set to NDVI (this needs to be a column)
+vars.pred <- names(ndvi.all.cc)[!names(ndvi.all.cc) %in% c("date", "doy", "year", "month")] # set predictor variable; note will be the same fo rnow. --> for Jillian, this will be changed to our met predictors --> each met var will need to be a separate column
 
 mod.out <- data.frame(doy=rep(days.use), 
                       resp=rep(rep(vars.resp, each=length(days.use)), length.out=length(days.use)*length(vars.resp)*length(vars.pred)),
