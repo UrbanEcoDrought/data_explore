@@ -83,5 +83,5 @@ mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
 mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
 
 # Creating basic lme model
-mod.var <- nlme::lme(vars.resp ~ vars.pred, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA[ChicagolandSPINDVIVPD.all.NA$type=="forest",], na.action=na.omit)
-summary(mod.var)
+mod.var.forest <- nlme::lme(ndvi.obs + ndvi.modeled + ndvi.modeled.anomaly ~ X14d.SPI + X30d.SPI + X60d.SPI + X90d.SPI + VPD, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA[ChicagolandSPINDVIVPD.all.NA$type=="forest",], na.action=na.omit)
+summary(mod.var.forest)
