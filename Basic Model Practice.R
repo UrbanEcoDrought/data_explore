@@ -77,11 +77,37 @@ mod.out$resp <- factor(mod.out$resp, levels=(vars.resp))
 mod.out$pred <- factor(mod.out$pred, levels=vars.pred)
 summary(mod.out)
 
+# Need help creating this object below. The example shows an if RESP==PRED condition which doesn't apply
+# out.ind <-
+
 # Save our t-stat & pvalue for the climate predictor
 mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
 mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
 mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
 
-# Creating basic lme model
+# Creating lme model for forest land cover type with all response variables and all predictor variables
 mod.var.forest <- nlme::lme(ndvi.obs + ndvi.modeled + ndvi.modeled.anomaly ~ X14d.SPI + X30d.SPI + X60d.SPI + X90d.SPI + VPD, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA[ChicagolandSPINDVIVPD.all.NA$type=="forest",], na.action=na.omit)
 summary(mod.var.forest)
+
+# Create column with land cover type as factor
+ChicagolandSPINDVIVPD.all.NA$type.f <- factor(ChicagolandSPINDVIVPD.all.NA$type, ordered = FALSE)
+summary(ChicagolandSPINDVIVPD.all.NA)
+is.factor(ChicagolandSPINDVIVPD.all.NA$type.f)
+str(ChicagolandSPINDVIVPD.all.NA$type.f)
+
+# Creating lme model with all response variables and all predictor variables and their interaction to land cover type
+mod.var.alltypes <- nlme::lme(ndvi.obs + ndvi.modeled + ndvi.modeled.anomaly ~ X14d.SPI*type.f + X30d.SPI*type.f + X60d.SPI*type.f + X90d.SPI*type.f + VPD*type.f, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA, na.action=na.omit)
+summary(mod.var.alltypes)
+
+# Creating lme model with observed ndvi response variable and all predictor variables and their interaction to land cover type
+mod.var.alltypes.ndvi.obs <- nlme::lme(ndvi.obs ~ X14d.SPI*type.f + X30d.SPI*type.f + X60d.SPI*type.f + X90d.SPI*type.f + VPD*type.f, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA, na.action=na.omit)
+summary(mod.var.alltypes.ndvi.obs)
+
+# Creating lme model with modeled ndvi response variable and all predictor variables and their interaction to land cover type
+mod.var.alltypes.ndvi.modeled <- nlme::lme(ndvi.modeled ~ X14d.SPI*type.f + X30d.SPI*type.f + X60d.SPI*type.f + X90d.SPI*type.f + VPD*type.f, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA, na.action=na.omit)
+summary(mod.var.alltypes.ndvi.modeled)
+
+# Creating lme model with modeled anomaly ndvi response variable and all predictor variables and their interaction to land cover type
+mod.var.alltypes.ndvi.modeled.anomaly <- nlme::lme(ndvi.modeled.anomaly ~ X14d.SPI*type.f + X30d.SPI*type.f + X60d.SPI*type.f + X90d.SPI*type.f + VPD*type.f, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA, na.action=na.omit)
+summary(mod.var.alltypes.ndvi.modeled.anomaly)
+
