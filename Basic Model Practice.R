@@ -81,3 +81,7 @@ summary(mod.out)
 mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
 mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
 mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
+
+# Creating basic lme model
+mod.var <- nlme::lme(vars.resp ~ vars.pred, random=list(year=~1), data=ChicagolandSPINDVIVPD.all.NA[ChicagolandSPINDVIVPD.all.NA$type=="forest",], na.action=na.omit)
+summary(mod.var)
