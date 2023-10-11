@@ -1,4 +1,4 @@
-# script to detrend NDVI time series for the land cover classes of the chicago reigon
+# script to detrend NDVI time series for the land cover classes of the Chicago region
 library(ggplot2)
 library(lubridate)
 library(dplR) # tree ring package I like to use to explore detrending sometimes
@@ -19,7 +19,7 @@ head(ndvi.all)
 
 
 
-# calculating mean time series fro each land cover type
+# calculating mean time series for each land cover type
 # using all years available to calculate the mean
 unique(ndvi.all$type)
 
@@ -51,13 +51,13 @@ ggplot(data=ndvi.mean) + facet_wrap(type~.) +
   scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=month.breaks$doy, labels = month.breaks$month) +
     theme_bw()
 
-# NDVI anomalies calcualtion----
+# NDVI anomalies calculation----
 
 # merging in the mean series into the ndvi.all data frame
 ndvi.all2 <- merge(ndvi.all, ndvi.mean[,c("ndvi.mean", "doy", "type")], by=c("type", "doy"), all=T)
 summary(ndvi.all2)    
 
-# subtracting the mean series from teh raw series
+# subtracting the mean series from the raw series
 ndvi.all2$anomaly.mean <- ndvi.all2$NDVI - ndvi.all2$ndvi.mean
 
 # saving this output
@@ -81,7 +81,7 @@ ggplot(data=ndvi.all2[ndvi.all2$year %in% c(2005, 2012),]) + facet_grid(year~typ
 ################################
 # Fancy detrending----
 
-# christy mentioned that there may be issues among the different satellites in terms of their sensitivity regarding NDVI
+# Christy mentioned that there may be issues among the different satellites in terms of their sensitivity regarding NDVI
 # to overcome this we want to account for some of that variance in the calculation of the mean (see above, where we have stepwise changes as years go by)
 
 library(mgcv)
@@ -281,7 +281,7 @@ dev.off() # shut down the link to the save file
 # Checking order of operations on double detrending
 # want to see if the order of steps for the double detrending matters
 
-# in this orientation we account for land cover first and then correct for satelite eccentricities
+# in this orientation we account for land cover first and then correct for satellite eccentricities
 # 09/21/2023 As of now this seems like the method we should use.
 
 ndvi.order <- ndvi.all3
