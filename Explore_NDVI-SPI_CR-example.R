@@ -59,7 +59,14 @@ mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=dat.tmp[,], na.acti
 # )
 mod.sum <- summary(mod.var)
 mod.sum
+MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
 AIC(mod.var)
+
+
+# Doing some diagnostic plots to check to make sure this model isn't fundamentally terrible
+hist(resid(mod.var)) # Looking for a normal distribution
+plot(resid(mod.var) ~ predict(mod.var)); abline(h=0, col="red") # Checking to make sure the values are evenly distributed around 0 (homoskedacity)
+plot(predict(mod.var)~dat.tmp[complete.cases(dat.tmp), "PRED"]); abline(a=0, b=1, col="red") # PRedicted vs. observed with a 1:1 line added; ideally these would match well, but we want them to at least not show a clear bias across the range.  (Note: in this example, the effect of our predictor is non-significant and the R2 is terrible, so we won't see a clean relationship; we're working with like March 1, so this makes sense)
 
 # Save our t-stat & pvalue for the climate predictor <- We'll need to figure out how to set up a dataframe to store our useful info, but for the moment, we may want to just set up a dataframe and use "rbind" for a small bit
 
