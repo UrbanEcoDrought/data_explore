@@ -187,7 +187,84 @@ ggplot(data=mod.out[mod.out$p.val<0.05,]) +
 # Once we run the models and save the output, we can start to compare what correlates when and then look at the metrics of model performance to decide among predictrs
 # This starts to get complicated, but we need to get to this stage quickly.
 ###################################
+# specifying our subsets for days/responses/predictors
+## Each level of a loop will iterate through ONE of these at a time --> one loop will go through days; that would be nexted in a model that goes through predictors and that would be nested in one that goes through reponses
+## But the base model just does ONE LEVLE OF EACH AT A TIME
+# PRED <- pred.vars[1] # X14d.SPI  # Removing this because we now will go through each in order by adding that outer loop
+RESP <- resp.vars[1] # ndvi.obs; NOTE: For some reason the anomaly wasn't working!  Very weird.
 
+# Creating a blank dataframe object with the columns we want to save
+## NOTE: We're doing this first so we don't overwrite it every time int he loop
+## Each column is basically the different levels that we want to runt he model on plus the data we want to save; We're just filling it with blank values for the moment
+mod.out <- data.frame(LandCover = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
+
+
+row.ind = 0 # Setting up an index that will tell us what row to save things in; we shoudl start with 0 because we haven't done anything yet
+for(PRED in pred.vars){
+  for(i in 1:length(days.use)){
+    dayNOW <- days.use[i] # This is almost exactly the same as above, but now i will go from 1 to 215 (the number of unique days.use we have)
+    
+    ## FROM HERE through the model IS IDENTICAL TO WHAT IS ABOVE FOR THE SINGLE EXAMPLE
+    # Here we're subsetting our big data frame to the SMALL temporal window we want --> this should help with temporal stationary in the effects of our predictors
+    dat.tmp <- ChicagolandSPINDVI[ChicagolandSPINDVI$doy>=dayNOW-7 & ChicagolandSPINDVI$doy<=dayNOW+7 ,] # Subsets things to a particular window (not just a single day); otherwise we were working with just 5 years of data, which isn't helpful
+    
+    # Selecting our predictors & responses and creating "dummy" columns called e.g. "RESP" that are filled with the values of whatever column RESP (as an object) is named
+    dat.tmp$RESP <- dat.tmp[,RESP] # This way of writing this creates a variable called RESP from the column that matches whatever value RESP is right now (e.g. ndvi.modeled.anomaly)
+    dat.tmp$PRED <- dat.tmp[,PRED] # This way of writing this creates a variable called PRED from the column that matches whatever value PRED is right now (e.g. X14d.SPI)
+    summary(dat.tmp) # Checking to make sure it all looks okay
+    dim(dat.tmp)
+    
+    # This is running the BASIC model
+    mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
+    # )
+    mod.sum <- summary(mod.var)
+    ## Commenting out the checks because we know it works because we ran a small test
+    # mod.sum
+    # AIC(mod.var)
+    
+    # Saving the info on the levels we ran
+    # # KEY DIFFERENCE: Here we need to specify which row the data will get saved in --> because this is a single level loop, we will only need as many rows as we have days of year
+    # # # NOTE: WHen we start nesting loops, setting up this index will be more complicated
+    row.ind = row.ind+1 # We want to save our output in the next row of the dataframe (the first one will be 0+1 = 1; the one after should become 2 and sowon)
+    
+    mod.out[row.ind, "LandCover"] <- LCtype
+    mod.out[row.ind, "PRED"] <- PRED
+    mod.out[row.ind, "RESP"] <- RESP
+    mod.out[row.ind, "DOY"] <- dayNOW
+    
+    # Saving the key info from the model we ran --> this is what we will use to compare not just the "best fit" metrics, but also key standardized info on EFFECT SIZE & DIRECTION (i.e. the t-stat and parameter coeffecient)
+    mod.out[row.ind,"intercept"] <- mod.sum$tTable["(Intercept)","Value"]
+    mod.out[row.ind,"coef"] <- mod.sum$tTable["PRED","Value"]
+    mod.out[row.ind,"t.stat"] <- mod.sum$tTable["PRED","t-value"]
+    mod.out[row.ind,"p.val"] <- mod.sum$tTable["PRED","p-value"]
+    mod.out[row.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
+    mod.out[row.ind, "AIC"] <- AIC(mod.var) 
+    
+  }
+}
+summary(mod.out)
+head(mod.out)
+
+# Adding some intelligible breaks to the graph to help with interpretation
+month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+                           month = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
+                                 month = c("Jan", "Apr", "Jul", "Oct"))
+
+# THIS IS THE MAIN GRAPH THAT WE WANT TO SAVE --> JILLIAN: PLEASE SAVE THESE AS PNG FILES IN YOUR WORKFLOW 
+# (The others are shown just to show how we built to this)
+ggplot(data=mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)
+
+
+# Comparing the NDVI intercept to the "modeled" ndvi that we used to calculate the anomaly to see if we're capturing the general trend of NDVI with our DOY/moving window approach
+ggplot(data=mod.out[,]) +
+  facet_grid(PRED~RESP) +
+  geom_point(data=ChicagolandSPINDVI[,], aes(x=doy, y=ndvi.modeled, color="Detrended predicted", group=year), size=0.5) +
+  geom_line(aes(x=DOY, y=intercept, color="Intercept"), size=2) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)
 
 ###################################
 
