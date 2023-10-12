@@ -258,6 +258,12 @@ ggplot(data=mod.out[mod.out$p.val<0.05,]) +
   geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)
 
+# We peak at R2 = 0.4, which really isn't terrible for such a simple model
+ggplot(data=mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=r.sq.m)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)
+
 
 # Comparing the NDVI intercept to the "modeled" ndvi that we used to calculate the anomaly to see if we're capturing the general trend of NDVI with our DOY/moving window approach
 ggplot(data=mod.out[,]) +
