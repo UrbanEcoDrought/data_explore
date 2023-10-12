@@ -52,6 +52,7 @@ mod.sum <- summary(mod.var)
 mod.sum
 
 # Save our t-stat & pvalue for the climate predictor <- We'll need to figure out how to set up a dataframe to store our useful info, but for the moment, we may want to just set up a dataframe and use "rbind" for a small bit
+# NOTE: THIS SCRIPT HASN'T BUILD THE MOD.OUT OBJECT, SO THIS WON'T WORK RIGHT NOW
 mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
 mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
 mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
