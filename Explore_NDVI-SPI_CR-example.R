@@ -19,10 +19,9 @@ summary(ndvi.test)
 # reading in Trent's SPI
 ChicagolandSPI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPI.csv"))
 
+# create column with date in ISO format
 ChicagolandSPI$date <- as.Date(ChicagolandSPI$Date, "%m/%d/%Y")
 summary(ChicagolandSPI)
-
-# create column with date in ISO format
 
 # merge ChicagolandSPI and NDVIomitNA2022 by date columns --> we dont' want to keep SPI for things we don't have NDVI for
 ChicagolandSPINDVI <- merge (ChicagolandSPI, ndvi.test, by=c("date"), all.x=F, all.y=TRUE)
@@ -100,21 +99,21 @@ mod.out # Printing our dataframe to make sure everythign saved appropriately
 ###################################
 # specifying our subsets for days/responses/predictors
 ## Each level of a loop will iterate through ONE of these at a time --> one loop will go through days; that would be nested in a model that goes through predictors and that would be nested in one that goes through responses
-## But the base model just does ONE LEVLE OF EACH AT A TIME
+## But the base model just does ONE LEVEL OF EACH AT A TIME
 PRED <- pred.vars[1] # X14d.SPI 
 RESP <- resp.vars[1] # ndvi.obs; NOTE: For some reason the anomaly wasn't working!  Very weird.
 
 # Creating a blank dataframe object with the columns we want to save
-## NOTE: We're doing this first so we don't overwrite it every time int he loop
-## Each column is basically the different levels that we want to runt he model on plus the data we want to save; We're just filling it with blank values for the moment
+## NOTE: We're doing this first so we don't overwrite it every time in the loop
+## Each column is basically the different levels that we want to run the model on plus the data we want to save; We're just filling it with blank values for the moment
 mod.out <- data.frame(LandCover = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
 
-row.ind = 0 # Setting up an index that will tell us what row to save things in; we shoudl start with 0 because we haven't done anything yet
+row.ind = 0 # Setting up an index that will tell us what row to save things in; we should start with 0 because we haven't done anything yet
 for(i in 1:length(days.use)){
   dayNOW <- days.use[i] # This is almost exactly the same as above, but now i will go from 1 to 215 (the number of unique days.use we have)
   
   ## FROM HERE through the model IS IDENTICAL TO WHAT IS ABOVE FOR THE SINGLE EXAMPLE
-  # Here we're subsetting our big data frame to the SMALL temporal window we want --> this should help with temporal stationary in the effects of our predictors
+  # Here we're subsetting our big data frame to the SMALL temporal window we want --> this should help with temporal stationarity in the effects of our predictors
   dat.tmp <- ChicagolandSPINDVI[ChicagolandSPINDVI$doy>=dayNOW-7 & ChicagolandSPINDVI$doy<=dayNOW+7 ,] # Subsets things to a particular window (not just a single day); otherwise we were working with just 5 years of data, which isn't helpful
   
   # Selecting our predictors & responses and creating "dummy" columns called e.g. "RESP" that are filled with the values of whatever column RESP (as an object) is named
