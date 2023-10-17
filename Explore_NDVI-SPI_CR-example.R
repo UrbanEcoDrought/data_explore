@@ -45,7 +45,7 @@ RESP <- resp.vars[1] # ndvi.obs; NOTE: For some reason the anomaly wasn't workin
 PRED <- pred.vars[1] # X14d.SPI 
 dayNOW <- days.use[1] # Just starting with the first DOY for the year 
 
-# Here we're subsetting our big data frame to the SMALL temporal window we want --> this should help with temproal stationarity in the effects of our predictors
+# Here we're subsetting our big data frame to the SMALL temporal window we want --> this should help with temporal stationarity in the effects of our predictors
 dat.tmp <- ChicagolandSPINDVI[ChicagolandSPINDVI$doy>=dayNOW-7 & ChicagolandSPINDVI$doy<=dayNOW+7 ,] # Subsets things to a particular window (not just a single day); otherwise we were working with just 5 years of data, which isn't helpful
 
 # Selecting our predictors & responses and creating "dummy" columns called e.g. "RESP" that are filled with the values of whatever column RESP (as an object) is named
@@ -65,14 +65,14 @@ AIC(mod.var)
 
 # Doing some diagnostic plots to check to make sure this model isn't fundamentally terrible
 hist(resid(mod.var)) # Looking for a normal distribution
-plot(resid(mod.var) ~ predict(mod.var)); abline(h=0, col="red") # Checking to make sure the values are evenly distributed around 0 (homoskedacity)
-plot(predict(mod.var)~dat.tmp[complete.cases(dat.tmp), "PRED"]); abline(a=0, b=1, col="red") # PRedicted vs. observed with a 1:1 line added; ideally these would match well, but we want them to at least not show a clear bias across the range.  (Note: in this example, the effect of our predictor is non-significant and the R2 is terrible, so we won't see a clean relationship; we're working with like March 1, so this makes sense)
+plot(resid(mod.var) ~ predict(mod.var)); abline(h=0, col="red") # Checking to make sure the values are evenly distributed around 0 (homoscedasticity)
+plot(predict(mod.var)~dat.tmp[complete.cases(dat.tmp), "PRED"]); abline(a=0, b=1, col="red") # Predicted vs. observed with a 1:1 line added; ideally these would match well, but we want them to at least not show a clear bias across the range.  (Note: in this example, the effect of our predictor is non-significant and the R2 is terrible, so we won't see a clean relationship; we're working with like March 1, so this makes sense)
 
 # Save our t-stat & pvalue for the climate predictor <- We'll need to figure out how to set up a dataframe to store our useful info, but for the moment, we may want to just set up a dataframe and use "rbind" for a small bit
 
 # Creating a blank dataframe object with the columns we want to save
 ## NOTE: If running multiple models, we need to set this up BEFORE we get here otherwise it will get overwritten
-## Each column is baiscally the different levels that we want to runt he model on plus the data we want to save; We're just filling it with blank values for the moment
+## Each column is basically the different levels that we want to run the model on plus the data we want to save; We're just filling it with blank values for the moment
 mod.out <- data.frame(LandCover = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
 
 # Saving the info on the levels we ran
@@ -99,7 +99,7 @@ mod.out # Printing our dataframe to make sure everythign saved appropriately
 ## Iterating the model through the day of year, but keeping the pred & resp the same
 ###################################
 # specifying our subsets for days/responses/predictors
-## Each level of a loop will iterate through ONE of these at a time --> one loop will go through days; that would be nexted in a model that goes through predictors and that would be nested in one that goes through reponses
+## Each level of a loop will iterate through ONE of these at a time --> one loop will go through days; that would be nested in a model that goes through predictors and that would be nested in one that goes through responses
 ## But the base model just does ONE LEVLE OF EACH AT A TIME
 PRED <- pred.vars[1] # X14d.SPI 
 RESP <- resp.vars[1] # ndvi.obs; NOTE: For some reason the anomaly wasn't working!  Very weird.
