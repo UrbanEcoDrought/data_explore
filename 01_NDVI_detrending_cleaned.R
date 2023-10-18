@@ -66,14 +66,6 @@ saveRDS(ndvi.detrend, file = file.path(google.drive, "data/r_files/processed_fil
 #####################
 # Sanity Check and Diagnostic plots----
 
-ggplot(data = ndvi.detrend) + facet_wrap(type~.) +
-  geom_line(aes(x=doy, y=ndvi.obs, col=as.factor(year)))
-
-ggplot(data = ndvi.detrend[ndvi.detrend$type=="urban-medium",]) + facet_wrap(year~.) +
-  geom_line(aes(x=doy, y=ndvi.anomaly, col=as.factor(year))) +
-  geom_hline(yintercept=0, linetype="dashed")
-
-
 # some of the quick diagnostic plots
 # plot of observed NDVI
 ggplot(data = ndvi.detrend) + facet_wrap(type~.) +
@@ -83,6 +75,7 @@ ggplot(data = ndvi.detrend) + facet_wrap(type~.) +
 ggplot(data = ndvi.detrend[ndvi.detrend$type=="urban-medium",]) + facet_wrap(year~.) +
   geom_line(aes(x=doy, y=ndvi.anomaly, col=as.factor(year))) +
   geom_hline(yintercept=0, linetype="dashed")
+  labs(title = "Urban Medium Land Cover NDVI Anomaly by Year")
 
 # DIAGNOSTIC PLOT
 # looking at raw NDVI and our double modeled NDVI
