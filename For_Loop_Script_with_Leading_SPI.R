@@ -1,5 +1,6 @@
 library(ggplot2)
 library(lubridate)
+library(dplyr)
 Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
@@ -89,12 +90,22 @@ month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 
 month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
                                  month = c("Jan", "Apr", "Jul", "Oct"))
 
-tstat_NDVI.obs_all.SPI_with.leads_Urban.Medium <- ggplot(data=mod.out[mod.out$p.val<0.05,]) +
+t.stat_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium <- ggplot(data=mod.out[mod.out$p.val<0.05,]) +
   facet_grid(.~RESP) +
-  geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
+  geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
-  labs(title = "t.stat of Response (NDVI.obs) and Predictors (all SPI and leads) for Urban Medium when p-value is significant")
+  labs(title = "t.stat of Response (NDVI.obs/anomaly) and Predictors (all SPI and leads) for Urban Medium when p-value is significant")
 
-png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_all.SPI_with.leads_Urban.Medium.png", unit="in", height = 5, width = 10, res = 300)
-plot(tstat_NDVI.obs_all.SPI_with.leads_Urban.Medium)
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/t.stat_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium.png", unit="in", height = 5, width = 10, res = 300)
+plot(t.stat_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium)
+dev.off()
+
+AIC_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium <- ggplot(data=mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+  labs(title = "AIC of Response (NDVI.obs/anomaly) and Predictors (all SPI and leads) for Urban Medium when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/AIC_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium.png", unit="in", height = 5, width = 10, res = 300)
+plot(AIC_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium)
 dev.off()
