@@ -92,7 +92,7 @@ month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
 
 t.stat_NDVI.obs.anomaly_all.SPI_with.leads_Urban.Medium <- ggplot(data=mod.out[mod.out$p.val<0.05,]) +
   facet_grid(.~RESP) +
-  geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
+  geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
   labs(title = "t.stat of Response (NDVI.obs/anomaly) and Predictors (all SPI and leads) for Urban Medium when p-value is significant")
 
