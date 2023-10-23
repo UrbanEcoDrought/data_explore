@@ -40,8 +40,10 @@ levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urba
 levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-low'] <-'5'
 levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-medium'] <-'6'
 levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-open'] <-'7'
-
 summary(ChicagolandSPINDVIVPDNA)
+
+# Change land cover type to numeric levels
+ChicagolandSPINDVIVPDNA$type <- as.numeric(levels(ChicagolandSPINDVIVPDNA$type))[ChicagolandSPINDVIVPDNA$type]
 
 ChicagolandSPINDVIVPDNA$month <- lubridate::month(ChicagolandSPINDVIVPDNA$date)
 days.use <- unique(ChicagolandSPINDVIVPDNA$doy[ChicagolandSPINDVIVPDNA$month >=3 & ChicagolandSPINDVIVPDNA$month <=9])
@@ -65,7 +67,7 @@ for(RESP in resp.vars){
       summary(dat.tmp) 
       dim(dat.tmp)
       
-      mod.var <- lme4::lmer(RESP ~ PRED + (1|Type), data=dat.tmp[,], na.action=na.omit)
+      mod.var <- nlme::lme(RESP ~ PRED + (1|Type), random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
       mod.sum <- summary(mod.var)
       
       row.ind = row.ind+2 
