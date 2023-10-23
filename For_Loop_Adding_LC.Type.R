@@ -9,11 +9,11 @@ head(ndvi.all)
 ChicagolandSPI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPI.csv"))
 
 ChicagolandSPI$date <- as.Date(ChicagolandSPI$Date, "%m/%d/%Y")
-ChicagolandSPINDVI$ndvi.anomaly <- as.vector(ChicagolandSPINDVI$ndvi.anomaly)
 summary(ChicagolandSPI)
 
 # merge SPI and NDVI dataframes
 ChicagolandSPINDVI <- merge(ChicagolandSPI, ndvi.all, by=c("date"), all.x=F, all.y=TRUE)
+ChicagolandSPINDVI$ndvi.anomaly <- as.vector(ChicagolandSPINDVI$ndvi.anomaly)
 summary(ChicagolandSPINDVI)
 
 # reading in Trent's VPD data
@@ -55,24 +55,26 @@ pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "VPD")
 mod.out <- data.frame(LandCover = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
 
 row.ind = 0 
-for(Type in lc.type){
+
 for(RESP in resp.vars){
   for(PRED in pred.vars){
-    for(i in 1:length(days.use)){
+    for(TYPE in lc.type){
+        for(i in 1:length(days.use)){
       dayNOW <- days.use[i] 
       
       dat.tmp <- ChicagolandSPINDVIVPDNA[ChicagolandSPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPINDVIVPDNA$doy<=dayNOW+7 ,]
+      dat.tmp$TYPE <- dat.tmp[,TYPE]
       dat.tmp$RESP <- dat.tmp[,RESP]
       dat.tmp$PRED <- dat.tmp[,PRED] 
       summary(dat.tmp) 
       dim(dat.tmp)
       
-      mod.var <- nlme::lme(RESP ~ PRED + (1|Type), random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
+      mod.var <- nlme::lme(RESP ~ PRED + TYPE, random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
       mod.sum <- summary(mod.var)
       
-      row.ind = row.ind+2 
+      row.ind = row.ind+1 
       
-      mod.out[row.ind, "LandCover"] <- Type
+      mod.out[row.ind, "TYPE"] <- TYPE
       mod.out[row.ind, "PRED"] <- PRED
       mod.out[row.ind, "RESP"] <- RESP
       mod.out[row.ind, "DOY"] <- dayNOW
