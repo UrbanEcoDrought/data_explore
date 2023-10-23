@@ -28,6 +28,19 @@ ChicagolandSPINDVIVPD <- merge (ChicagolandSPINDVI, ChicagolandVPD, by=c("date")
 # remove all NA values from dataframe (should be years before 2001)
 ChicagolandSPINDVIVPDNA <- na.omit(ChicagolandSPINDVIVPD)
 
+# Change land cover type to numeric values
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='crop'] <-'1'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='forest'] <-'2'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='grassland'] <-'3'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-high'] <-'4'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-low'] <-'5'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-medium'] <-'6'
+levels(ChicagolandSPINDVIVPDNA$type)[levels(ChicagolandSPINDVIVPDNA$type)=='urban-open'] <-'7'
+summary(ChicagolandSPINDVIVPDNA)
+
+# Change land cover type to numeric levels
+ChicagolandSPINDVIVPDNA$type <- as.numeric(levels(ChicagolandSPINDVIVPDNA$type))[ChicagolandSPINDVIVPDNA$type]
+
 # Simplify column label to VPD
 colnames(ChicagolandSPINDVIVPDNA)[14] = 'VPD'
 summary(ChicagolandSPINDVIVPDNA)
@@ -35,11 +48,11 @@ summary(ChicagolandSPINDVIVPDNA)
 ChicagolandSPINDVIVPDNA$month <- lubridate::month(ChicagolandSPINDVIVPDNA$date)
 days.use <- unique(ChicagolandSPINDVIVPDNA$doy[ChicagolandSPINDVIVPDNA$month >=3 & ChicagolandSPINDVIVPDNA$month <=9])
 days.use 
-lc.type <- c("crop", "forest", "grassland", "urban-low", "urban-medium", "urban-high", "urban-open")
+lc.type <- c("1", "2", "3", "4", "5", "6", "7")
 resp.vars <- c("ndvi.obs", "ndvi.anomaly")
 pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "VPD")
 
-mod.out <- data.frame(LandCover = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
+mod.out <- data.frame(TYPE = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
 
 row.ind = 0 
 
