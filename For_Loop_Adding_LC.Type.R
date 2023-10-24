@@ -94,7 +94,7 @@ month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
 
 
 tstat_NDVI.obs_anomaly.all.SPI_VPD_LC.types <- ggplot(data=mod.out[mod.out$p.val<0.05,]) +
-  facet_grid(.~RESP) +
+  facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
   labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
