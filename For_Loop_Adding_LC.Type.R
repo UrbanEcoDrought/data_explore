@@ -159,3 +159,29 @@ AIC_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug <- ggplot(mod.out[mod.out
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/AIC_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug.png", unit="in", height = 5, width = 10, res = 300)
 plot(AIC_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug)
 dev.off()
+
+##############################
+
+#Created new mod.out data frame with column showing land cover and predictor variable.
+mod.out2 <- transform(mod.out, TYPE_PRED=paste(TYPE, PRED))
+summary(mod.out2)
+
+tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types <- ggplot(mod.out2[mod.out2$p.val<0.05,]) +      
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y= TYPE_PRED, fill=t.stat)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+  labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) by Lc Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.png", unit="in", height = 5, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types)
+dev.off()
+
+tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug <- ggplot(mod.out2[mod.out2$p.val<0.05,]) +
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y=TYPE_PRED, fill=t.stat)) +
+  scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
+  labs(title = "July/August t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) by Lc Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug.png", unit="in", height = 5, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug)
+dev.off()
