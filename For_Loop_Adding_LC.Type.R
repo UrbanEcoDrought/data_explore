@@ -185,3 +185,35 @@ tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug <- ggplot(mod.out2[m
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug.png", unit="in", height = 5, width = 10, res = 300)
 plot(tstat_NDVI.obs_anomaly.all.SPI_VPD_by_LC.types.for.july.aug)
 dev.off()
+
+#Created new mod.out data frame with columbt showing predictor variable and land cover.
+mod.out3 <- transform(mod.out2, PRED_TYPE=paste(PRED, TYPE))
+
+tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD <- ggplot(mod.out3[mod.out3$p.val<0.05,]) +      
+  facet_grid(.~RESP) +
+     geom_tile(aes(x=DOY, y= PRED_TYPE, fill=t.stat)) +
+     scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+     labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and LC Type by Predictors (all SPI and VPD) when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD.png", unit="in", height = 5, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD)
+dev.off()
+
+tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD <- ggplot(mod.out3[mod.out3$p.val<0.05,]) +      
+  facet_grid(.~RESP) +
+  geom_tile(aes(x=DOY, y= PRED_TYPE, fill=t.stat)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+  labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and LC Type by Predictors (all SPI and VPD) when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD.png", unit="in", height = 5, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.lc.types_by_all.SPI_VPD)
+dev.off()
+
+plot(x=mod.out$t.stat, y=mod.out$p.val )
+
+#Examining lowest p-values (<0.0002)
+ggplot(mod.out3[mod.out3$p.val<0.0002,]) +      
+       facet_grid(.~RESP) +
+       geom_tile(aes(x=DOY, y= PRED_TYPE, fill=t.stat)) +
+       scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+       labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and LC Type by Predictors (all SPI and VPD) when p-value <0.0002")
