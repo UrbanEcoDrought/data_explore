@@ -1,6 +1,7 @@
 library(ggplot2)
 library(lubridate)
-Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+# Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
@@ -29,7 +30,7 @@ ChicagolandSPINDVIVPD <- merge (ChicagolandSPINDVI, ChicagolandVPD, by=c("date")
 ChicagolandSPINDVIVPDNA <- na.omit(ChicagolandSPINDVIVPD)
 
 # Change land cover type to numeric levels
-ChicagolandSPINDVIVPDNA$type <- as.numeric(levels(ChicagolandSPINDVIVPDNA$type))[ChicagolandSPINDVIVPDNA$type]
+# ChicagolandSPINDVIVPDNA$type <- as.numeric(levels(ChicagolandSPINDVIVPDNA$type))[ChicagolandSPINDVIVPDNA$type]
 
 # Simplify column label to VPD
 colnames(ChicagolandSPINDVIVPDNA)[14] = 'VPD'
@@ -38,7 +39,9 @@ summary(ChicagolandSPINDVIVPDNA)
 ChicagolandSPINDVIVPDNA$month <- lubridate::month(ChicagolandSPINDVIVPDNA$date)
 days.use <- unique(ChicagolandSPINDVIVPDNA$doy[ChicagolandSPINDVIVPDNA$month >=3 & ChicagolandSPINDVIVPDNA$month <=9])
 days.use 
-lc.type <- c("crop", "forest", "grassland", "urban-low", "urban-medium", "urban-high", "urban-open")
+# lc.type <- c("crop", "forest", "grassland", "urban-low", "urban-medium", "urban-high", "urban-open")
+lc.type <- unique(ChicagolandSPINDVIVPDNA$type) # this will help avoid typos
+
 resp.vars <- c("ndvi.obs", "ndvi.anomaly")
 pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "VPD")
 
@@ -48,38 +51,39 @@ row.ind = 0
 
 for(RESP in resp.vars){
   for(PRED in pred.vars){
-    for(j in 1:7){
-      TYPE<- lc.type[j]
-        for(i in 1:length(days.use)){
-      dayNOW <- days.use[i] 
-      
-      dat.tmp <- ChicagolandSPINDVIVPDNA[ChicagolandSPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPINDVIVPDNA$doy<=dayNOW+7 ,]
-      dat.tmp$TYPE <- dat.tmp[,TYPE]
-      dat.tmp$RESP <- dat.tmp[,RESP]
-      dat.tmp$PRED <- dat.tmp[,PRED] 
-      summary(dat.tmp) 
-      dim(dat.tmp)
-      
-      mod.var <- nlme::lme(RESP ~ PRED, subset = (TYPE == j), random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
-      mod.sum <- summary(mod.var)
-      
-      row.ind = row.ind+1 
-      
-      mod.out[row.ind, "TYPE"] <- TYPE
-      mod.out[row.ind, "PRED"] <- PRED
-      mod.out[row.ind, "RESP"] <- RESP
-      mod.out[row.ind, "DOY"] <- dayNOW
-      
-      mod.out[row.ind,"intercept"] <- mod.sum$tTable["(Intercept)","Value"]
-      mod.out[row.ind,"coef"] <- mod.sum$tTable["PRED","Value"]
-      mod.out[row.ind,"t.stat"] <- mod.sum$tTable["PRED","t-value"]
-      mod.out[row.ind,"p.val"] <- mod.sum$tTable["PRED","p-value"]
-      mod.out[row.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
-      mod.out[row.ind, "AIC"] <- AIC(mod.var) 
-    }
-  }
-  }
-}
+    for(TYPE in lc.type){
+      # TYPE<- lc.type[j]
+      for(i in 1:length(days.use)){
+        dayNOW <- days.use[i] 
+        
+        dat.tmp <- ChicagolandSPINDVIVPDNA[ChicagolandSPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPINDVIVPDNA$doy<=dayNOW+7 & ChicagolandSPINDVIVPDNA$type==TYPE,]
+        # dat.tmp$TYPE <- dat.tmp[,TYPE] # Because the data is in long format there's no column called crop, forest, etc. like there is with our responses & predictors
+        dat.tmp$RESP <- dat.tmp[,RESP]
+        dat.tmp$PRED <- dat.tmp[,PRED] 
+        summary(dat.tmp) 
+        dim(dat.tmp)
+        
+        # mod.var <- nlme::lme(RESP ~ PRED, subset = (type == TYPE), random=list(year=~1), data=dat.tmp[,], na.action=na.omit) # something like this *may* work, but it was givving me issues, so cleaner to just subset up top (line 59)
+        mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
+        mod.sum <- summary(mod.var)
+        
+        row.ind = row.ind+1 
+        
+        mod.out[row.ind, "TYPE"] <- TYPE
+        mod.out[row.ind, "PRED"] <- PRED
+        mod.out[row.ind, "RESP"] <- RESP
+        mod.out[row.ind, "DOY"] <- dayNOW
+        
+        mod.out[row.ind,"intercept"] <- mod.sum$tTable["(Intercept)","Value"]
+        mod.out[row.ind,"coef"] <- mod.sum$tTable["PRED","Value"]
+        mod.out[row.ind,"t.stat"] <- mod.sum$tTable["PRED","t-value"]
+        mod.out[row.ind,"p.val"] <- mod.sum$tTable["PRED","p-value"]
+        mod.out[row.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
+        mod.out[row.ind, "AIC"] <- AIC(mod.var) 
+      } # End day loop
+    } # end Type loop
+  } # End PRED loop
+} # End RESP loop
 summary(mod.out)
 head(mod.out)
 
