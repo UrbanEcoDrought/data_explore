@@ -129,7 +129,7 @@ dev.off()
 start.end <- c(182, 244)
 
 r2_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug <- ggplot(mod.out[mod.out$p.val<0.05,]) +
-  facet_grid(.~RESP+TYPE) +
+  facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=r.sq.m)) +
   scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
   labs(title = "July/August r2 of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
@@ -139,7 +139,7 @@ plot(r2_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug)
 dev.off()
 
 AIC_NDVI.obs_anomaly.all.SPI_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
-  facet_grid(.~RESP+TYPE) +
+  facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
   labs(title = "AIC of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
@@ -151,7 +151,7 @@ dev.off()
 start.end <- c(182, 244)
 
 AIC_NDVI.obs_anomaly.all.SPI_VPD_LC.types.for.july.aug <- ggplot(mod.out[mod.out$p.val<0.05,]) +
-  facet_grid(.~RESP+TYPE) +
+  facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
   scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
   labs(title = "July/August AIC of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
