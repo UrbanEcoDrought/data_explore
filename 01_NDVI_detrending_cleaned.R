@@ -84,6 +84,11 @@ diag.scatter <- ggplot(data = ndvi.detrend) +
   geom_point(aes(x=ndvi.obs, y = ndvi.modeled), alpha=0.25) +
   geom_abline(slope = 1, intercept=0, col="red", linewidth=1.5)
 
+# Adding graph only looking at the grow season
+diag.scatter.grow.season <- ggplot(data = ndvi.detrend[ndvi.detrend$doy>60 & ndvi.detrend$doy<305,]) +
+  geom_point(aes(x=ndvi.obs, y = ndvi.modeled), alpha=0.25) +
+  geom_abline(slope = 1, intercept=0, col="red", linewidth=1.5)
+
 # DIAGNOSTIC PLOT
 # Showing modeled and observed time series
 # allows us to see how well the modeled time series is doing compared with the observed for individual dates
@@ -99,6 +104,12 @@ diag.resid <- ggplot(data = ndvi.detrend) +
   geom_point(aes(x=ndvi.obs, y = ndvi.anomaly, col=type), alpha=0.25) +
   geom_hline(yintercept=0, linetype="dashed", color="orange2")
 
+# plotting anomalies on the y axis, observations on the x axis for grow season only
+diag.resid.grow.season <- ggplot(data = ndvi.detrend[ndvi.detrend$doy>60 & ndvi.detrend$doy<305,]) +
+  geom_point(aes(x=ndvi.obs, y = ndvi.anomaly, col=type), alpha=0.25) +
+  geom_hline(yintercept=0, linetype="dashed", color="orange2")
+
+
 # saving diagnostic plots
 # initiate link to a save file
 png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_timeseries.png"), height=8, width = 15, unit = "in", res=300)
@@ -106,10 +117,17 @@ diag.ts # call the graphic object
 dev.off() # shut down the link to the save file
 
 png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_scatter.png"), height=8, width = 8, unit = "in", res=300)
+diag.scatter # call the graphic object
+dev.off() # shut down the link to the save file
+
+png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_scatter_grow_season.png"), height=8, width = 8, unit = "in", res=300)
+diag.scatter.grow.season # call the graphic object
+dev.off() # shut down the link to the save file
+
+png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_residuals.png"), height=8, width = 8, unit = "in", res=300)
 diag.resid # call the graphic object
 dev.off() # shut down the link to the save file
 
-
-png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_residuals.png"), height=8, width = 8, unit = "in", res=300)
-diag.scatter # call the graphic object
+png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_residuals_grow_season.png"), height=8, width = 8, unit = "in", res=300)
+diag.resid.grow.season # call the graphic object
 dev.off() # shut down the link to the save file
