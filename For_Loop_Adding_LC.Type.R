@@ -26,24 +26,37 @@ ChicagolandVPD$date <- as.Date(ChicagolandVPD$Date, "%m/%d/%Y")
 # merge ChicagolandVPD and ChicagolandSPINDVI by date columns
 ChicagolandSPINDVIVPD <- merge (ChicagolandSPINDVI, ChicagolandVPD, by=c("date"), all.x=TRUE, all.y=TRUE)
 
+# reading in Trent's SPEI data
+ChicagolandSPEI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPEI.csv"))
+
+# create column with date in ISO format
+ChicagolandSPEI$date <- as.Date(ChicagolandSPEI$Date, "%m/%d/%Y")
+
+# merge ChicagolandVPD and ChicagolandSPINDVI by date columns
+ChicagolandSPEISPINDVIVPD <- merge (ChicagolandSPINDVIVPD, ChicagolandSPEI, by=c("date"), all.x=TRUE, all.y=TRUE)
+
 # remove all NA values from dataframe (should be years before 2001)
-ChicagolandSPINDVIVPDNA <- na.omit(ChicagolandSPINDVIVPD)
+ChicagolandSPEISPINDVIVPDNA <- na.omit(ChicagolandSPEISPINDVIVPD)
 
 # Change land cover type to numeric levels
 # ChicagolandSPINDVIVPDNA$type <- as.numeric(levels(ChicagolandSPINDVIVPDNA$type))[ChicagolandSPINDVIVPDNA$type]
 
 # Simplify column label to VPD
-colnames(ChicagolandSPINDVIVPDNA)[14] = 'VPD'
-summary(ChicagolandSPINDVIVPDNA)
+colnames(ChicagolandSPEISPINDVIVPDNA)[14] = 'VPD'
+colnames(ChicagolandSPEISPINDVIVPDNA)[16] = 'SPEI.X14d'
+colnames(ChicagolandSPEISPINDVIVPDNA)[17] = 'SPEI.X30d'  
+colnames(ChicagolandSPEISPINDVIVPDNA)[18] = 'SPEI.X60d'
+colnames(ChicagolandSPEISPINDVIVPDNA)[19] = 'SPEI.X90d'
+summary(ChicagolandSPEISPINDVIVPDNA)
 
-ChicagolandSPINDVIVPDNA$month <- lubridate::month(ChicagolandSPINDVIVPDNA$date)
-days.use <- unique(ChicagolandSPINDVIVPDNA$doy[ChicagolandSPINDVIVPDNA$month >=3 & ChicagolandSPINDVIVPDNA$month <=9])
+ChicagolandSPEISPINDVIVPDNA$month <- lubridate::month(ChicagolandSPEISPINDVIVPDNA$date)
+days.use <- unique(ChicagolandSPEISPINDVIVPDNA$doy[ChicagolandSPEISPINDVIVPDNA$month >=3 & ChicagolandSPEISPINDVIVPDNA$month <=9])
 days.use 
 # lc.type <- c("crop", "forest", "grassland", "urban-low", "urban-medium", "urban-high", "urban-open")
-lc.type <- unique(ChicagolandSPINDVIVPDNA$type) # this will help avoid typos
+lc.type <- unique(ChicagolandSPEISPINDVIVPDNA$type) # this will help avoid typos
 
 resp.vars <- c("ndvi.obs", "ndvi.anomaly")
-pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "VPD")
+pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "VPD", "SPEI.X14d", "SPEI.X30d", "SPEI.X60d", "SPEI.X90d")
 
 mod.out <- data.frame(TYPE = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
 
@@ -56,7 +69,7 @@ for(RESP in resp.vars){
       for(i in 1:length(days.use)){
         dayNOW <- days.use[i] 
         
-        dat.tmp <- ChicagolandSPINDVIVPDNA[ChicagolandSPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPINDVIVPDNA$doy<=dayNOW+7 & ChicagolandSPINDVIVPDNA$type==TYPE,]
+        dat.tmp <- ChicagolandSPEISPINDVIVPDNA[ChicagolandSPEISPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPEISPINDVIVPDNA$doy<=dayNOW+7 & ChicagolandSPEISPINDVIVPDNA$type==TYPE,]
         # dat.tmp$TYPE <- dat.tmp[,TYPE] # Because the data is in long format there's no column called crop, forest, etc. like there is with our responses & predictors
         dat.tmp$RESP <- dat.tmp[,RESP]
         dat.tmp$PRED <- dat.tmp[,PRED] 
@@ -94,14 +107,14 @@ month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
 month.july.august <- data.frame(doy = c(182, 213, 244),
                                 month = c("Jul", "Aug", "Sep"))
 
-tstat_NDVI.obs_anomaly.all.SPI_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+tstat_NDVI.obs_anomaly.all.SPI.SPEI_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
   facet_grid(TYPE~RESP) +
    geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
-  labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
+  labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI, SPEI and VPD) for All Lc Types when p-value is significant")
 
-png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_VPD_LC.types.png", unit="in", height = 5, width = 10, res = 300)
-plot(tstat_NDVI.obs_anomaly.all.SPI_VPD_LC.types)
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_SPEI_VPD_LC.types.png", unit="in", height = 5, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.all.SPI.SPEI_VPD_LC.types)
 dev.off()
 
 start.end <- c(182, 244)
