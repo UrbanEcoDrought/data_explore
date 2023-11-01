@@ -230,3 +230,72 @@ ggplot(mod.out3[mod.out3$p.val<0.0002,]) +
        geom_tile(aes(x=DOY, y= PRED_TYPE, fill=t.stat)) +
        scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
        labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and LC Type by Predictors (all SPI and VPD) when p-value <0.0002")
+
+#######################
+#LME with added variables
+#######################
+
+# lc.type <- c("crop", "forest", "grassland", "urban-low", "urban-medium", "urban-high", "urban-open")
+lc.type <- unique(ChicagolandSPEISPINDVIVPDNA$type) # this will help avoid typos
+
+resp.vars <- c("ndvi.obs", "ndvi.anomaly")
+pred.vars <- c("X14d.SPI", "X30d.SPI", "X60d.SPI", "X90d.SPI", "SPEI.X14d", "SPEI.X30d", "SPEI.X60d", "SPEI.X90d")
+
+mod.out <- data.frame(TYPE = NA, PRED=NA, RESP=NA, DOY=NA, intercept=NA, coef=NA, t.stat=NA, p.val=NA, r.sq.m=NA, AIC=NA) 
+
+row.ind = 0 
+
+for(RESP in resp.vars){
+  for(PRED in pred.vars){
+    for(TYPE in lc.type){
+      # TYPE<- lc.type[j]
+      for(i in 1:length(days.use)){
+        dayNOW <- days.use[i] 
+        
+        dat.tmp <- ChicagolandSPEISPINDVIVPDNA[ChicagolandSPEISPINDVIVPDNA$doy>=dayNOW-7 & ChicagolandSPEISPINDVIVPDNA$doy<=dayNOW+7 & ChicagolandSPEISPINDVIVPDNA$type==TYPE,]
+        # dat.tmp$TYPE <- dat.tmp[,TYPE] # Because the data is in long format there's no column called crop, forest, etc. like there is with our responses & predictors
+        dat.tmp$RESP <- dat.tmp[,RESP]
+        dat.tmp$PRED <- dat.tmp[,PRED] 
+        summary(dat.tmp) 
+        dim(dat.tmp)
+        
+        # mod.var <- nlme::lme(RESP ~ PRED, subset = (type == TYPE), random=list(year=~1), data=dat.tmp[,], na.action=na.omit) # something like this *may* work, but it was givving me issues, so cleaner to just subset up top (line 59)
+        mod.var <- nlme::lme(RESP ~ PRED + VPD, random=list(year=~1), data=dat.tmp[,], na.action=na.omit)
+        mod.sum <- summary(mod.var)
+        
+        row.ind = row.ind+1 
+        
+        mod.out[row.ind, "TYPE"] <- TYPE
+        mod.out[row.ind, "PRED"] <- PRED
+        mod.out[row.ind, "RESP"] <- RESP
+        mod.out[row.ind, "DOY"] <- dayNOW
+        
+        mod.out[row.ind,"intercept"] <- mod.sum$tTable["(Intercept)","Value"]
+        mod.out[row.ind,"coef"] <- mod.sum$tTable["PRED","Value"]
+        mod.out[row.ind,"t.stat"] <- mod.sum$tTable["PRED","t-value"]
+        mod.out[row.ind,"p.val"] <- mod.sum$tTable["PRED","p-value"]
+        mod.out[row.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
+        mod.out[row.ind, "AIC"] <- AIC(mod.var) 
+      } # End day loop
+    } # end Type loop
+  } # End PRED loop
+} # End RESP loop
+summary(mod.out)
+head(mod.out)
+
+month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+                           month = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
+                                 month = c("Jan", "Apr", "Jul", "Oct"))
+month.july.august <- data.frame(doy = c(182, 213, 244),
+                                month = c("Jul", "Aug", "Sep"))
+
+tstat_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(TYPE~RESP) +
+  geom_tile(aes(x=DOY, y=PRED , fill=t.stat)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+  labs(title = "t.stat of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and SPEI with VPD) for All Lc Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_SPEI_with_VPD_LC.types.png", unit="in", height = 10, width = 10, res = 300)
+plot(tstat_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types)
+dev.off()
