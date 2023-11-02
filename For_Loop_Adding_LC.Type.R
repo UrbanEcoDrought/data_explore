@@ -299,3 +299,13 @@ tstat_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types <- ggplot(mod.out[mod.out$
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat_NDVI.obs_anomaly.all.SPI_SPEI_with_VPD_LC.types.png", unit="in", height = 10, width = 10, res = 300)
 plot(tstat_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types)
 dev.off()
+
+AIC_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(TYPE~RESP) +
+  geom_tile(aes(x=DOY, y=PRED , fill=AIC)) +
+  scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
+  labs(title = "AIC of Response (NDVI.obs and NDVI.anomaly) and Predictors (all SPI and SPEI with VPD) for All Lc Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/AIC_NDVI.obs_anomaly.all.SPI_SPEI_with_VPD_LC.types.png", unit="in", height = 10, width = 10, res = 300)
+plot(AIC_NDVI.obs_anomaly.all.SPI.SPEI_with_VPD_LC.types)
+dev.off()
