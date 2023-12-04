@@ -92,19 +92,60 @@ gam.fitted.SPEI14 <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(VPD) + s(TMIN30d)
 plot.gam(gam.fitted.SPEI14)
 summary(gam.fitted.SPEI14)
 
-gam.fitted.SPEI30 <- gam(ndvi.obs ~ s(year) + s(SPEI.X30d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI30.type <- gam(ndvi.obs ~ s(year) + s(SPEI.X30d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 plot.gam(gam.fitted.SPEI30)
-summary(gam.fitted.SPEI30)
+summary(gam.fitted.SPEI30.type)
 
-gam.fitted.SPEI60 <- gam(ndvi.obs ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI60.type <- gam(ndvi.obs ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 plot.gam(gam.fitted.SPEI60)
-summary(gam.fitted.SPEI60)
+summary(gam.fitted.SPEI60.type)
 
-gam.fitted.SPEI90 <- gam(ndvi.obs ~ s(year) + s(SPEI.X90d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI90.type <- gam(ndvi.obs ~ s(year) + s(SPEI.X90d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 plot.gam(gam.fitted.SPEI90)
-summary(gam.fitted.SPEI90)
+summary(gam.fitted.SPEI90.type)
+
+gam.fitted.SPEI14.type <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.SPEI14)
+summary(gam.fitted.SPEI14.type)
+#gam.fitted.SPEI14 returns the largest adjusted R squared value (0.668) and the smallest restricted max likelihood (-8546.8)
+
+#rearranging the land cover types to make forest the intercept
+ChicagolandTempSPEISPINDVIVPDNA$type <- relevel(ChicagolandTempSPEISPINDVIVPDNA$type, "forest")
 
 gam.fitted.SPEI14 <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
-plot.gam(gam.fitted.SPEI14)
 summary(gam.fitted.SPEI14)
-#gam.fitted.SPEI14 returns the largest adjusted R squared value (0.668) and the smallest restricted max likelihood (-8546.8)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI30, gam.fitted.SPEI.X30d,gam.fitted.SPEI60,gam.fitted.SPEI60.type, gam.fitted.SPEI14.type, gam.fitted.SPEI30.type, gam.fitted.SPEI90, gam.fitted.SPEI90.type)
+
+gam.fitted.SPEI14.type.unsmoothyearspei <- gam(ndvi.obs ~ year + SPEI.X14d + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI14.type.unsmoothyear <- gam(ndvi.obs ~ year + s(SPEI.X14d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI14.type.unsmoothspei <- gam(ndvi.obs ~ s(year) + SPEI.X14d + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI14.type.unsmoothvpd <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + VPD + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+gam.fitted.SPEI14.type.unsmoothtemp <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(VPD) + TMIN30d + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd)
+
+gam.fitted.SPEI14.type.interact.vpd <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d, VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.vpd)
+
+gam.fitted.SPEI14.type.interact.temp <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d, TMIN30d) + s(VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.temp)
+
+gam.fitted.SPEI14.type.interact.temp.vpd <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(TMIN30d, VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.temp.vpd)
+
+gam.fitted.SPEI14.type.interact.year <- gam(ndvi.obs ~ s(year, SPEI.X14d) + s(TMIN30d) + s(VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.year)
+
+gam.fitted.SPEI14.type.interact.year.temp <- gam(ndvi.obs ~ s(year, TMIN30d) + s(SPEI.X14d) + s(VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.year.temp)
+
+gam.fitted.SPEI14.type.interact.year.vpd <- gam(ndvi.obs ~ s(year, VPD) + s(SPEI.X14d) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.year.vpd)
+
+gam.fitted.SPEI14.type.interact.year.temp.vpd <- gam(ndvi.obs ~ s(year, TMIN30d, VPD) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.interact.year.temp.vpd)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd)
+
+#gam.fitted.SPEI14.type.interact.year.temp.vpd has the lowest AIC but a much larger degree of freedom. The lowest AIC without a huge jump in df is gam.fitted.SPEI14.type.interact.year.temp
