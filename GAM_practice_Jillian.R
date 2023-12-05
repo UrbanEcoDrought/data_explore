@@ -183,3 +183,9 @@ plot.gam(gam.fitted.double.interact.SPEI14.TMIN30.doy)
 summary(gam.fitted.double.interact.SPEI14.TMIN30.doy)
 
 AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact, gam.fitted.SPEI14.TMIN30.doy.VPD, gam.fitted.interact.SPEI14.TMIN30.doy, gam.fitted.double.interact.SPEI14.TMIN30.doy)
+
+gam.fitted.TMIN30.doy.interact.SPEI.X14d <- gam(ndvi.obs ~ s(TMIN30d, doy) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+
+plot(gam.fitted.interact.SPEI14.TMIN30.doy, select = 2, shade = TRUE, shade.col = "hotpink")
+
+plot.gam(gam.fitted.SPEI14.TMIN30.doy)
