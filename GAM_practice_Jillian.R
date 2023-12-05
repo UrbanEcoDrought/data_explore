@@ -189,3 +189,12 @@ gam.fitted.TMIN30.doy.interact.SPEI.X14d <- gam(ndvi.obs ~ s(TMIN30d, doy) + s(S
 plot(gam.fitted.interact.SPEI14.TMIN30.doy, select = 2, shade = TRUE, shade.col = "hotpink")
 
 plot.gam(gam.fitted.SPEI14.TMIN30.doy)
+
+plot(gam.fitted.SPEI14.TMIN30.doy, col = topo.colors(10))
+
+vis.gam(gam.fitted.SPEI14.TMIN30.doy, view = c("doy", "TMIN30d"), plot.type = "contour", color = "terrain", contour.col = "black")
+
+install.packages('gratia')
+library(gratia)
+draw(gam.fitted.SPEI14.TMIN30.doy)
+draw(gam.fitted.SPEI14.TMIN30.doy, view = c("doy", "TMIN30d"), plot.type = "contour", color = "terrain", contour.col = "black")
