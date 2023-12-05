@@ -149,3 +149,37 @@ summary(gam.fitted.SPEI14.type.interact.year.temp.vpd)
 AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd)
 
 #gam.fitted.SPEI14.type.interact.year.temp.vpd has the lowest AIC but a much larger degree of freedom. The lowest AIC without a huge jump in df is gam.fitted.SPEI14.type.interact.year.temp
+
+gam.fitted.SPEI14.TMIN30.doy.VPD <- gam(ndvi.obs ~ s(doy, TMIN30d) + s(SPEI.X14d) + s(VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.SPEI14.TMIN30.doy.VPD)
+summary(gam.fitted.SPEI14.TMIN30.doy.VPD)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy)
+
+gam.fitted.SPEI14.TMIN30.doy.interact <- gam(ndvi.obs ~ s(doy, TMIN30d, SPEI.X14d) + s(VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.SPEI14.TMIN30.doy.interact)
+summary(gam.fitted.SPEI14.TMIN30.doy.interact)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact)
+
+gam.fitted.SPEI14.TMIN30.doy.VPD.interact <- gam(ndvi.obs ~ s(doy, TMIN30d) + s(SPEI.X14d, VPD) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.SPEI14.TMIN30.doy.VPD.interact)
+summary(gam.fitted.SPEI14.TMIN30.doy.VPD.interact)
+
+gam.fitted.SPEI14.TMIN30.doy <- gam(ndvi.obs ~ s(doy, TMIN30d) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.SPEI14.TMIN30.doy)
+summary(gam.fitted.SPEI14.TMIN30.doy)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact, gam.fitted.SPEI14.TMIN30.doy.VPD)
+
+gam.fitted.interact.SPEI14.TMIN30.doy <- gam(ndvi.obs ~ s(doy, SPEI.X14d) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.interact.SPEI14.TMIN30.doy)
+summary(gam.fitted.interact.SPEI14.TMIN30.doy)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact, gam.fitted.SPEI14.TMIN30.doy.VPD, gam.fitted.interact.SPEI14.TMIN30.doy)
+
+gam.fitted.double.interact.SPEI14.TMIN30.doy <- gam(ndvi.obs ~ s(doy, SPEI.X14d) + s(doy, TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+plot.gam(gam.fitted.double.interact.SPEI14.TMIN30.doy)
+summary(gam.fitted.double.interact.SPEI14.TMIN30.doy)
+
+AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact, gam.fitted.SPEI14.TMIN30.doy.VPD, gam.fitted.interact.SPEI14.TMIN30.doy, gam.fitted.double.interact.SPEI14.TMIN30.doy)
