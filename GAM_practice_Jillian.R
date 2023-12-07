@@ -1,8 +1,9 @@
 library(ggplot2)
 library(lubridate)
 Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
-#Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
-google.drive <- Sys.getenv("GOOGLE_DRIVE")
+# Sys.setenv(google.drive = "~/Google Drive/Shared drives/Urban Ecological Drought")
+# google.drive <- Sys.getenv("GOOGLE_DRIVE")
+google.drive = "~/Google Drive/Shared drives/Urban Ecological Drought"
 
 ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
 head(ndvi.all)
@@ -184,9 +185,57 @@ summary(gam.fitted.double.interact.SPEI14.TMIN30.doy)
 
 AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd, gam.fitted.SPEI14.type.interact.year, gam.fitted.SPEI14.type.interact.year.temp, gam.fitted.SPEI14.type.interact.year.vpd, gam.fitted.SPEI14.type.interact.year.temp.vpd, gam.fitted.SPEI14.TMIN30.doy, gam.fitted.SPEI14.TMIN30.doy.interact, gam.fitted.SPEI14.TMIN30.doy.VPD, gam.fitted.interact.SPEI14.TMIN30.doy, gam.fitted.double.interact.SPEI14.TMIN30.doy)
 
+
 gam.fitted.TMIN30.doy.interact.SPEI.X14d <- gam(ndvi.obs ~ s(TMIN30d, doy) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
 
 plot(gam.fitted.interact.SPEI14.TMIN30.doy, select = 2, shade = TRUE, shade.col = "hotpink")
+
+ChicagolandTempSPEISPINDVIVPDNA$predicted <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
+ChicagolandTempSPEISPINDVIVPDNA$resids <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
+plot(ndvi.obs ~ predicted, data=ChicagolandTempSPEISPINDVIVPDNA); abline(a=0, b=1, col="red")
+plot(resids ~ predicted, data=ChicagolandTempSPEISPINDVIVPDNA); abline(a=0, b=0, col="red")
+plot(resids ~ SPEI.X14d, data=ChicagolandTempSPEISPINDVIVPDNA); abline(a=0, b=0, col="red")
+
+ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2020,]) +
+  facet_wrap(~type) +
+  geom_line(aes(x=date, y=ndvi.obs, color="observed"), size=0.5) +
+  geom_line(aes(x=date, y=predicted, color="model"), size=0.5)
+
+
+# Allowign the temp relationships to vary by landcover class
+gam.fitted.TMIN30.doy.interact.SPEI.X14d2 <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
+
+# Now allow SPEDI to vary by landcover class
+gam.fitted.TMIN30.doy.interact.SPEI.X14d3 <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d3)
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d2, gam.fitted.TMIN30.doy.interact.SPEI.X14d3)
+
+gam.fitted.TMIN30.doy.interact.SPEI.X14d4 <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d4)
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d2, gam.fitted.TMIN30.doy.interact.SPEI.X14d3, gam.fitted.TMIN30.doy.interact.SPEI.X14d4)
+
+# Comparing the AIC of allowing doy-temp to vary by Landcover type
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2,gam.fitted.TMIN30.doy.interact.SPEI.X14d3)
+
+ChicagolandTempSPEISPINDVIVPDNA$predicted2 <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
+ChicagolandTempSPEISPINDVIVPDNA$resids2 <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
+ChicagolandTempSPEISPINDVIVPDNA$predicted3 <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d3)
+ChicagolandTempSPEISPINDVIVPDNA$resids3 <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d3)
+
+ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2010,]) +
+  facet_wrap(~type) +
+  geom_line(aes(x=date, y=ndvi.obs, color="observed"), size=0.5) +
+  geom_line(aes(x=date, y=predicted2, color="pheno by LC"), size=0.5) +
+  geom_line(aes(x=date, y=predicted3, color="pheno + drought by LC"), size=0.5)
+
+# ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2020,]) +
+#   facet_wrap(~type) +
+#   geom_line(aes(x=date, y=ndvi.obs, color="observed"), size=0.5) +
+#   geom_line(aes(x=date, y=predicted3, color="model"), size=0.5)
+
 
 plot.gam(gam.fitted.SPEI14.TMIN30.doy)
 
