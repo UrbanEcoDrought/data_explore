@@ -72,6 +72,43 @@ ggplot(data = ndvi.sats57[ndvi.sats57$year %in% c(2005),]) + facet_wrap(type~.) 
   geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) for Sats 5/7"), size=1.5) +
   geom_line(aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
   scale_color_manual(values=c("Predicted (Normal) for Sats 5/7"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))
+
+#Create a subset of lc types
+ndvi.sats57lctypes<- subset(ndvi.sats57, subset = type %in% c("crop", "forest", "urban-high", "urban-low"))
+summary(ndvi.sats57lctypes)
+
+# Create plot for crop, forest, urban high and urban low with the 2005 observed NDVI and compare it to the predicted ("normal") NDVI
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_2005_vs_Normal.png", unit="in", height = 5, width = 10, res = 300)
+ ggplot(data = ndvi.sats57lctypes,) + facet_wrap(type~.) +
+  geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) for Sats 5/7"), size=1.5) +
+  geom_line(data=  ndvi.sats57lctypes[ndvi.sats57lctypes$year %in% c(2005),], aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
+  scale_color_manual(values=c("Predicted (Normal) for Sats 5/7"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))+
+  labs(title="Normal NDVI vs. Drought Year", y = "NDVI", x ="Day of Year")
+ dev.off()
+ 
+ #Create a subset of lc types
+ ndvi.sats57lctypesgrowseason<- subset(ndvi.sats57lctypes, subset = ndvi.sats57lctypes$doy>60 & ndvi.sats57lctypes$doy<305,)
+ summary(ndvi.sats57lctypes)
+ 
+ # Create plot for crop, forest, urban high and urban low with the 2005 observed NDVI and compare it to the predicted ("normal") NDVI during the grow season
+ png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_2005_vs_Normal_Grow_Season.png", unit="in", height = 5, width = 10, res = 300)
+ ggplot(data = ndvi.sats57lctypesgrowseason,) + facet_wrap(type~.) +
+   geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) for Sats 5/7"), size=1.5) +
+   geom_line(data=  ndvi.sats57lctypesgrowseason[ndvi.sats57lctypesgrowseason$year %in% c(2005),], aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
+   scale_color_manual(values=c("Predicted (Normal) for Sats 5/7"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))+
+   labs(title="Normal NDVI vs. Drought Year", y = "NDVI", x ="Day of Year")
+ dev.off()
+ 
+ ggplot(data = ndvi.sats57lctypes[ndvi.sats57lctypes$doy>60 & ndvi.sats57lctypes$doy<305,]) + facet_wrap(type~.) +
+   geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) for Sats 5/7"), size=1.5) +
+   geom_line(data=  ndvi.sats57lctypes[ndvi.sats57lctypes$year %in% c(2005),], aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
+   scale_color_manual(values=c("Predicted (Normal) for Sats 5/7"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))+
+   labs(title="Normal NDVI vs. Drought Year", y = "NDVI", x ="Day of Year") 
+ 
+#Save graph of crop, forest, urban high and urban low with the 2005 observed NDVI and compare it to the predicted ("normal") NDVI as png.
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/NDVI_doyGraph.png", unit="in", height = 5, width = 10, res = 300)
+plot(NDVI_doyYear)
+dev.off()
   
 #Plot 2005 anomaly
 ggplot(data=ndvi.sats57) + facet_wrap(type~.) +
