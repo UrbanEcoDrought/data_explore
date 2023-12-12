@@ -59,13 +59,14 @@ ggplot(data = ndvi.all[ndvi.all$year %in% c(2023),]) + facet_wrap(type~.) +
   scale_color_manual(values=c("Predicted (Normal) All Sats"="black", "Observed 2023 NDVI (Drought NDVI)"="red2"))
 
 # merge sat89 and sat57 data sets 
-ndvi.all.predictions <- merge(ndvi.predictions, ndvi.sats89, by=c("date", "type"), all.x=F, all.y=TRUE)
+ndvi.all.predictions <- merge(ndvi.predictions, ndvi.sats89, all.x=T, all.y=TRUE)
 summary(ndvi.all.predictions)
-ndvi.all.predictionsna <- na.omit(ndvi.all.predictions)
-summary(ndvi.all.predictionsna)
+# ndvi.all.predictionsna <- na.omit(ndvi.all.predictions)
+# summary(ndvi.all.predictionsna)
 
-ggplot(data = ndvi.predictionsna[ndvi.predictionsna$year.x %in% c(2023)]) + facet_wrap(type~.) +
-  geom_line(aes(x=doy.x, y=predict57, color="Predicted (Normal) Sats 5/7"), size=1.5) +
-  geom_line(aes(x=doy.x, y=predict89, color="Predicted (Normal) Sats 8/9"))  +
-  geom_line(aes(x=doy.x, y=NDVI.x, color="Observed 2023 NDVI"))
-  scale_color_manual(values=c("Predicted (Normal) Sats 5/7"="black", "Predicted (Normal) Sats 8/9"="red2", "Observed 2023 NDVI"="yellow"))
+# ggplot(data = ndvi.all.predictions[ndvi.all.predictions$year %in% c(2023),]) + facet_wrap(type~.) +
+ggplot(data = ndvi.all.predictions[,]) + facet_wrap(type~.) +
+  geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) Sats 5/7", group=year), size=1.5) +
+  geom_line(aes(x=doy, y=predict89, color="Predicted (Normal) Sats 8/9", group=year), size=1.5)  +
+  geom_line(data = ndvi.all.predictions[ndvi.all.predictions$year %in% c(2023),], aes(x=doy, y=NDVI, color="Observed 2023 NDVI")) +
+  scale_color_manual(values=c("Predicted (Normal) Sats 5/7"="black", "Predicted (Normal) Sats 8/9"="gray30", "Observed 2023 NDVI"="yellow3"))

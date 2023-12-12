@@ -93,5 +93,6 @@ ggplot(data = ndvi.all[ndvi.all$year %in% c(2005),]) + facet_wrap(type~.) +
   geom_line(aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
   scale_color_manual(values=c("Predicted (Normal) All Sats"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))
 
-ndvi.predictions <- merge(ndvi.all, ndvi.sats57, by=c("date", "type"), all.x=F, all.y=TRUE)
-ndvi.predictionsna <- na.omit(ndvi.predictions)
+ndvi.predictions <- merge(x=ndvi.all, y=ndvi.sats57, all.x=T, all.y=TRUE) # Switching to both all.x and all.y=T will keep all rows from both objects
+summary(ndvi.predictions)
+# ndvi.predictionsna <- na.omit(ndvi.predictions)
