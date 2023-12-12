@@ -5,8 +5,8 @@ library(mgcv)
 library(dplR)
 
 # Setting the file paths. This may be different for your computer.
-Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
-#Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
+# Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 # reading in NDVI product
@@ -23,24 +23,40 @@ unique(ndvi.sat8$year)
 ndvi.sat9 <- ndvi.all[ndvi.all$satellite=="Landsat9",]
 unique(ndvi.sat9$year)
 
+# same thing as you did above; just another way of writing it
+# unique(ndvi.all$year[ndvi.all$satellite=="Landsat5"])
+# unique(ndvi.all[ndvi.all$satellite=="Landsat5", "year"])
+
+
+# An alternate way would've been to reference the year we care about
+unique(ndvi.all$satellite[ndvi.all$year==2005])
+
+
 #Create a subset of satellites 5 and 7
 ndvi.sats57<- subset(ndvi.all, subset = satellite %in% c("Landsat5", "Landsat7"))
+summary(ndvi.sats57)
 
 #Detrend data
-ndvi.sats57.gamm.step1 <- gamm(NDVI ~ type + s(doy, k=12, by=type), random=list(satellite=~1), data=ndvi.sats57, na.rm=T)
-ndvi.sats57na <- ndvi.sats57[!is.na(ndvi.sats57$NDVI),]
-ndvi.sats57na$ndvi.gam.pred.step1 <-predict(ndvi.sats57.gamm.step1)
+# ndvi.sats57.gamm.step1 <- gamm(NDVI ~ type + s(doy, k=12, by=type), random=list(satellite=~1), data=ndvi.sats57, na.rm=T)
+# summary(ndvi.sats57.gamm.step1$gam)
+ndvi.sats57.gam.step1 <- gam(NDVI ~ type + s(doy, k=12, by=type), data=ndvi.sats57, na.rm=T)
+summary(ndvi.sats57.gam.step1)
 
-ndvi.sats57na$ndvi.gam.step1.anomaly <- ndvi.sats57na$NDVI-ndvi.sats57na$ndvi.gam.pred.step1 
-ndvi.gamm.step2 <- gam(ndvi.gam.step1.anomaly~s(doy, k=12, by=satellite), data=ndvi.sats57na, na.rm=T) 
-ndvi.sats57na$ndvi.gam.pred.step2 <- predict(ndvi.gamm.step2)
-ndvi.sats57na$ndvi.modeled <- ndvi.sats57na$ndvi.gam.pred.step1 + ndvi.sats57na$ndvi.gam.pred.step2
+# ndvi.sats57na <- ndvi.sats57[!is.na(ndvi.sats57$NDVI),]
+# ndvi.sats57na$ndvi.gam.pred.step1 <- predict(ndvi.sats57.gamm.step1)
 
+
+# Newdata allows prediction with data not used to train the model ("known" predictors that might've been excluded from model fitting for whatever reason)
+ndvi.sats57$predict1 <- predict(ndvi.sats57.gam.step1, newdata=ndvi.sats57[,])
+summary(ndvi.sats57)
+
+
+# We don't want double-detrended
 #Create double detrend anomalies.
-ndvi.sats57na$ndvi.anomaly <- ndvi.sats57na$NDVI-ndvi.sats57na$ndvi.modeled
-head(ndvi.sats57na)
-ndvi.check.all <- merge(ndvi.sats57na, ndvi.all)
-summary(ndvi.check.all)
+# ndvi.sats57na$ndvi.anomaly <- ndvi.sats57na$NDVI-ndvi.sats57na$ndvi.modeled
+# head(ndvi.sats57na)
+# ndvi.check.all <- merge(ndvi.sats57na, ndvi.all)
+# summary(ndvi.check.all)
 
 #Parse down data frame and save.
 summary(ndvi.check.all)
