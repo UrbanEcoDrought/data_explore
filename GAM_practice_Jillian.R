@@ -203,7 +203,7 @@ ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year
   geom_line(aes(x=date, y=predicted, color="model"), size=0.5)
 
 
-# Allowign the temp relationships to vary by landcover class
+# Allowing the temp relationships to vary by landcover class
 gam.fitted.TMIN30.doy.interact.SPEI.X14d2 <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
 AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2)
