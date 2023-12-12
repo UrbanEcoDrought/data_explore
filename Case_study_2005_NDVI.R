@@ -47,32 +47,51 @@ summary(ndvi.sats57.gam.step1)
 
 
 # Newdata allows prediction with data not used to train the model ("known" predictors that might've been excluded from model fitting for whatever reason)
-ndvi.sats57$predict1 <- predict(ndvi.sats57.gam.step1, newdata=ndvi.sats57[,])
+ndvi.sats57$predict57 <- predict(ndvi.sats57.gam.step1, newdata=ndvi.sats57[,])
 summary(ndvi.sats57)
 
 #Create anomalies
-ndvi.sats57$ndvi.anomaly <- ndvi.sats57$NDVI - ndvi.sats57$predict1
+ndvi.sats57$ndvi.anomaly <- ndvi.sats57$NDVI - ndvi.sats57$predict57
 
 #plot
 #Compare modeled(predicted) data with observed values
 ggplot(data = ndvi.sats57) + facet_wrap(type~.) +
-  geom_point(aes(x=NDVI, y=predict1), alpha=0.25)
+  geom_point(aes(x=NDVI, y=predict57), alpha=0.25)
 
 plot.gam(ndvi.sats57.gam.step1)
 
 
-plot(NDVI ~ predict1, data=ndvi.sats57); abline(a=0, b=1, col="red")
+plot(NDVI ~ predict57, data=ndvi.sats57); abline(a=0, b=1, col="red")
 
 #Plot predicted ndvi by land cover type
 ggplot(data = ndvi.sats57) + facet_wrap(type~.) +
-  geom_line(aes(x=doy, y=predict1))
+  geom_line(aes(x=doy, y=predict57))
 
 # We want to add the 2005 observed NDVI and compare it to the predicted ("normal") NDVI
 ggplot(data = ndvi.sats57[ndvi.sats57$year %in% c(2005),]) + facet_wrap(type~.) +
-  geom_line(aes(x=doy, y=predict1, color="Predicted (Normal)"), size=1.5) +
-  geom_line(aes(x=doy, y=NDVI, color="Observed NDVI (Drought NDVI)"))  +
-  scale_color_manual(values=c("Predicted (Normal)"="black", "Observed NDVI (Drought NDVI)"="red2"))
+  geom_line(aes(x=doy, y=predict57, color="Predicted (Normal) for Sats 5/7"), size=1.5) +
+  geom_line(aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
+  scale_color_manual(values=c("Predicted (Normal) for Sats 5/7"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))
   
 #Plot 2005 anomaly
 ggplot(data=ndvi.sats57) + facet_wrap(type~.) +
   geom_line(data=ndvi.sats57[ndvi.sats57$year %in% c(2005),], aes(x=doy, y=ndvi.anomaly, col=as.factor(year)))
+
+#Compare 2005 with all available data
+
+#Detrend data
+ndvi.gam.step1 <- gam(NDVI ~ type + s(doy, k=12, by=type), data=ndvi.all, na.rm=T)
+summary(ndvi.gam.step1)
+
+# Newdata allows prediction with data not used to train the model ("known" predictors that might've been excluded from model fitting for whatever reason)
+ndvi.all$predict1 <- predict(ndvi.gam.step1, newdata=ndvi.all[,])
+summary(ndvi.all)
+
+# We want to add the 2005 observed NDVI and compare it to the predicted ("normal") NDVI
+ggplot(data = ndvi.all[ndvi.all$year %in% c(2005),]) + facet_wrap(type~.) +
+  geom_line(aes(x=doy, y=predict1, color="Predicted (Normal) All Sats"), size=1.5) +
+  geom_line(aes(x=doy, y=NDVI, color="Observed 2005 NDVI (Drought NDVI)"))  +
+  scale_color_manual(values=c("Predicted (Normal) All Sats"="black", "Observed 2005 NDVI (Drought NDVI)"="red2"))
+
+ndvi.predictions <- merge(ndvi.all, ndvi.sats57, by=c("date", "type"), all.x=F, all.y=TRUE)
+ndvi.predictionsna <- na.omit(ndvi.predictions)
