@@ -50,22 +50,23 @@ summary(ndvi.sats57.gam.step1)
 ndvi.sats57$predict1 <- predict(ndvi.sats57.gam.step1, newdata=ndvi.sats57[,])
 summary(ndvi.sats57)
 
+#Create anomalies
+ndvi.sats57$ndvi.anomaly <-ndvi.sats57$NDVI - ndvi.sats57$predict1
 
-# We don't want double-detrended
-#Create double detrend anomalies.
-# ndvi.sats57na$ndvi.anomaly <- ndvi.sats57na$NDVI-ndvi.sats57na$ndvi.modeled
-# head(ndvi.sats57na)
-# ndvi.check.all <- merge(ndvi.sats57na, ndvi.all)
-# summary(ndvi.check.all)
+#plot
+#Compare modeled(predicted) data with observed values
+ggplot(data = ndvi.sats57) + facet_wrap(type~.) +
+  geom_point(aes(x=NDVI, y=predict1), alpha=0.25)
 
-#Parse down data frame and save.
-summary(ndvi.check.all)
-ndvi.detrend.sats57 <- ndvi.check.all[,c("year", "doy", "type", "date", "NDVI", "ndvi.modeled", "ndvi.anomaly")]
-names(ndvi.detrend.sats57) <- c("year", "doy", "type", "date", "ndvi.obs", "ndvi.modeled","ndvi.anomaly")
+plot.gam(ndvi.sats57.gam.step1)
 
 
-#Fit gam for data
-gam.fitted.sats57 <- gam(ndvi.obs ~ ,data = ndvi.sats57, method = 'REML')
+plot(NDVI ~ predict1, data=ndvi.sats57); abline(a=0, b=1, col="red")
 
-ndvi.sats57na$predicted <- predict(gam.fitted.sats57)
-ndvi.sats57na$resids <- resid(gam.fitted.sats57)
+#Plot predicted ndvi by land cover type
+ggplot(data = ndvi.sats57) + facet_wrap(type~.) +
+  geom_line(aes(x=doy, y=predict1))
+
+#Plot 2005 anomaly
+ggplot(data=ndvi.sats57) + facet_wrap(type~.) +
+  geom_line(data=ndvi.sats57[ndvi.sats57$year %in% c(2005),], aes(x=doy, y=ndvi.anomaly, col=as.factor(year)))
