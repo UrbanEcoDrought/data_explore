@@ -51,7 +51,7 @@ ndvi.sats57$predict1 <- predict(ndvi.sats57.gam.step1, newdata=ndvi.sats57[,])
 summary(ndvi.sats57)
 
 #Create anomalies
-ndvi.sats57$ndvi.anomaly <-ndvi.sats57$NDVI - ndvi.sats57$predict1
+ndvi.sats57$ndvi.anomaly <- ndvi.sats57$NDVI - ndvi.sats57$predict1
 
 #plot
 #Compare modeled(predicted) data with observed values
@@ -67,6 +67,12 @@ plot(NDVI ~ predict1, data=ndvi.sats57); abline(a=0, b=1, col="red")
 ggplot(data = ndvi.sats57) + facet_wrap(type~.) +
   geom_line(aes(x=doy, y=predict1))
 
+# We want to add the 2005 observed NDVI and compare it to the predicted ("normal") NDVI
+ggplot(data = ndvi.sats57[ndvi.sats57$year %in% c(2005),]) + facet_wrap(type~.) +
+  geom_line(aes(x=doy, y=predict1, color="Predicted (Normal)"), size=1.5) +
+  geom_line(aes(x=doy, y=NDVI, color="Observed NDVI (Drought NDVI)"))  +
+  scale_color_manual(values=c("Predicted (Normal)"="black", "Observed NDVI (Drought NDVI)"="red2"))
+  
 #Plot 2005 anomaly
 ggplot(data=ndvi.sats57) + facet_wrap(type~.) +
   geom_line(data=ndvi.sats57[ndvi.sats57$year %in% c(2005),], aes(x=doy, y=ndvi.anomaly, col=as.factor(year)))
