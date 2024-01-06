@@ -119,11 +119,15 @@ summary(gam.fitted.SPEI14)
 AIC(gam.fitted.SPEI14, gam.fitted.SPEI30, gam.fitted.SPEI.X30d,gam.fitted.SPEI60,gam.fitted.SPEI60.type, gam.fitted.SPEI14.type, gam.fitted.SPEI30.type, gam.fitted.SPEI90, gam.fitted.SPEI90.type)
 
 gam.fitted.SPEI14.type.unsmoothyearspei <- gam(ndvi.obs ~ year + SPEI.X14d + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.unsmoothyearspei)
 gam.fitted.SPEI14.type.unsmoothyear <- gam(ndvi.obs ~ year + s(SPEI.X14d) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.unsmoothyear)
 gam.fitted.SPEI14.type.unsmoothspei <- gam(ndvi.obs ~ s(year) + SPEI.X14d + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.unsmoothspei)
 gam.fitted.SPEI14.type.unsmoothvpd <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + VPD + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.SPEI14.type.unsmoothvpd)
 gam.fitted.SPEI14.type.unsmoothtemp <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d) + s(VPD) + TMIN30d + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
-
+summary(gam.fitted.SPEI14.type.unsmoothtemp)
 AIC(gam.fitted.SPEI14, gam.fitted.SPEI14.type, gam.fitted.SPEI14.type.interact.vpd, gam.fitted.SPEI14.type.interact.temp, gam.fitted.SPEI14.type.interact.temp.vpd)
 
 gam.fitted.SPEI14.type.interact.vpd <- gam(ndvi.obs ~ s(year) + s(SPEI.X14d, VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
@@ -247,9 +251,86 @@ ChicagolandTempSPEISPINDVIVPDNA <- ChicagolandTempSPEISPINDVIVPDNA %>% mutate(ND
 gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.5d.ave, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave)
 
-AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2,gam.fitted.TMIN30.doy.interact.SPEI.X14d3, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave)
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2,gam.fitted.TMIN30.doy.interact.SPEI.X14d3,gam.fitted.TMIN30.doy.interact.SPEI.X14d4, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave)
 
-gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave.doy <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.5d.ave, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
-summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave.doy)
+#Creating dataframe with missing values removed from 3day ave for predict/resid functions to run properly (3 NA values removed at beginning of column)
+NDVI.obs.t.minus.3d.aveNA <- ChicagolandTempSPEISPINDVIVPDNA[!is.na(ChicagolandTempSPEISPINDVIVPDNA$NDVI.obs.t.minus.3d.ave),]
+gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.3d.ave, by=type) + type, data = NDVI.obs.t.minus.3d.aveNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
 
-AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2,gam.fitted.TMIN30.doy.interact.SPEI.X14d3, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave.doy)
+
+NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
+NDVI.obs.t.minus.3d.aveNA$resids.3d.ave <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
+plot(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
+plot(resids.3d.ave ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
+plot(resids.3d.ave ~ SPEI.X14d, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
+plot(ndvi.obs ~ predicted.3d.ave,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+#previous plot by land cover type
+plot(ndvi.obs ~ predicted.3d.ave,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+plot(ndvi.anomaly ~ resids.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
+
+
+rmse.3d.ave <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave)^2))
+rmse.3d.ave.obs.0to.15 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.15]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.15])^2))
+rmse.3d.ave.obs.15to.3 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.15&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.3]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.15&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.3])^2))
+rmse.3d.ave.obs.3to.45 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.3&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.45]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.3&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.45])^2))
+rmse.3d.ave.obs.45to.6 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.45&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.6]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.45&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.6])^2))
+rmse.3d.ave.obs.6to.75 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.6&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.75]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.6&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.75])^2))
+rmse.3d.ave.obs.75to.9 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.75&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.9]-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave[NDVI.obs.t.minus.3d.aveNA$ndvi.obs>0.75&NDVI.obs.t.minus.3d.aveNA$ndvi.obs<=0.9])^2))
+
+#creating anomaly from 3 day average GAM model
+NDVI.obs.t.minus.3d.aveNA$ndvi.anomaly.3day.ave.model <- NDVI.obs.t.minus.3d.aveNA$ndvi.obs - NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave
+
+ggplot(data=NDVI.obs.t.minus.3d.aveNA[NDVI.obs.t.minus.3d.aveNA$year>2010,]) +
+  facet_wrap(~type) +
+  geom_line(aes(x=date, y=ndvi.obs, color="Observed NDVI"), size=0.5) +
+  geom_line(aes(x=date, y=predicted.3d.ave, color="NDVI modeled by 3 day ave NDVI"), size=0.5) 
+
+NDVI.obs.t.minus.5d.aveNA <- ChicagolandTempSPEISPINDVIVPDNA[!is.na(ChicagolandTempSPEISPINDVIVPDNA$NDVI.obs.t.minus.5d.ave),]
+NDVI.obs.t.minus.5d.aveNA$predicted.5d.ave <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave)
+rmse.5d.ave <- sqrt(mean((NDVI.obs.t.minus.5d.aveNA$ndvi.obs-NDVI.obs.t.minus.5d.aveNA$predicted.5d.ave)^2))
+
+gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.aveNA <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.2d.ave, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.aveNA)
+
+NDVI.obs.t.minus.2d.aveNA <- ChicagolandTempSPEISPINDVIVPDNA[!is.na(ChicagolandTempSPEISPINDVIVPDNA$NDVI.obs.t.minus.2d.ave),]
+gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.aveNA <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.2d.ave, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.aveNA)
+
+
+NDVI.obs.t.minus.2d.aveNA$predicted.2d.ave <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.aveNA)
+rmse.2d.ave <- sqrt(mean((NDVI.obs.t.minus.2d.aveNA$ndvi.obs-NDVI.obs.t.minus.2d.aveNA$predicted.2d.ave)^2))
+
+NDVI.obs.t.minus.2d.NA <- ChicagolandTempSPEISPINDVIVPDNA[!is.na(ChicagolandTempSPEISPINDVIVPDNA$NDVI.obs.t.minus.2d),]
+gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.NA <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.2d, by=type) + type, data = NDVI.obs.t.minus.2d.NA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.NA)
+
+
+NDVI.obs.t.minus.2d.NA$predicted.2d <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.NA)
+rmse.2d <- sqrt(mean((NDVI.obs.t.minus.2d.NA$ndvi.obs-NDVI.obs.t.minus.2d.NA$predicted.2d)^2))
+
+gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d.NA <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, by=type) + s(NDVI.obs.t.minus.1d, by=type) + type, data = NDVI.obs.t.minus.2d.NA, method = 'REML')
+summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d.NA)
+
+NDVI.obs.t.minus.2d.NA$predicted.1d <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d.NA)
+rmse.1d <- sqrt(mean((NDVI.obs.t.minus.2d.NA$ndvi.obs-NDVI.obs.t.minus.2d.NA$predicted.1d)^2))
+
+ggplot(data=NDVI.obs.t.minus.3d.aveNA[NDVI.obs.t.minus.3d.aveNA$year>2010,])+
+  facet_wrap(~type)+
+geom_line(aes(x=date, y=ndvi.obs, color="Observed NDVI")) +
+  geom_line(aes(x=date, y=predicted.3d.ave, color="NDVI modeled by 3 day ave NDVI")) +
+  geom_point(aes(x=date, y=ndvi.anomaly.3day.ave.model, color="NDVI anomaly modeled by 3 day ave NDVI")) 
+
+  
+# 6 figures arranged in 6 rows
+attach(NDVI.obs.t.minus.3d.aveNA)
+par(mfrow=c(1,6))
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA[NDVI.obs.t.minus.3d.aveNA$year>2010,]);abline(a=0, b=0, col="red")
+
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
