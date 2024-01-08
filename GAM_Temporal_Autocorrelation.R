@@ -366,6 +366,23 @@ png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/Low.VCI
 plot(Lowest_VCI_by_LC_Type_Year)
 dev.off()
 
+Less_than_0.05VCI_by_LC_Type_Year <- ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2010 & ChicagolandTempSPEISPINDVIVPDNA$VCI<0.05,]) +
+  facet_wrap(~type+year, ncol=11, nrow=7) +
+  geom_line(aes(x=doy, y=ndvi.obs, color="Observed NDVI"), size=0.5) +
+  geom_point(aes(x=doy, y=VCI, color="VCI"), size=0.5)
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/Less.than.0.05.VCI.by.LC.types.png", unit="in", height = 20, width = 30, res = 300)
+plot(Less_than_0.05VCI_by_LC_Type_Year)
+dev.off()
+
+Less_than_0.01VCI_by_LC_Type_Year <- ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2010 & ChicagolandTempSPEISPINDVIVPDNA$VCI<0.01,]) +
+  facet_wrap(~type+year, ncol=11, nrow=7) +
+  geom_line(aes(x=doy, y=ndvi.obs, color="Observed NDVI"), size=0.5) +
+  geom_point(aes(x=doy, y=VCI, color="VCI"), size=0.5)
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/Less.than.0.01.VCI.by.LC.types.png", unit="in", height = 20, width = 30, res = 300)
+plot(Less_than_0.01VCI_by_LC_Type_Year)
+dev.off()
 ###############################
 #Incorporating VCI into gam model
 gam.fitted.VCI <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + s(VCI, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
@@ -386,4 +403,31 @@ summary(gam.fitted.VCI)
 #ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.doy <- predict(gam.fitted.VCI.doy)
 #rmse.VCI.doy <- sqrt(mean((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs - ChicagolandTempSPEISPINDVIVPDNA$ )^2))
 
+#Removing NA values from VCI
+NDVI.obs.VCINA <- ChicagolandTempSPEISPINDVIVPDNA[!is.na(ChicagolandTempSPEISPINDVIVPDNA$VCI),]
 
+#Check rmse for VCI gam model
+NDVI.obs.VCINA$predicted.VCI <- predict(gam.fitted.VCI)
+NDVI.obs.VCINA$ndvi.anomaly.VCI <- resid(gam.fitted.VCI)
+
+rmse.VCI <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs- NDVI.obs.VCINA$predicted.VCI )^2))
+
+#Check rmse for VCI.doy gam model in general and at different NDVI.obs windows
+NDVI.obs.VCINA$predicted.VCI.doy <- predict(gam.fitted.VCI.doy)
+rmse.VCI.doy <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs- NDVI.obs.VCINA$predicted.VCI.doy )^2))
+rmse.VCI.0to.15 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs<=0.15]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs<=0.15])^2))
+rmse.VCI.15to.3 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.15&NDVI.obs.VCINA$ndvi.obs<=0.3]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.15&NDVI.obs.VCINA$ndvi.obs<=0.3])^2))
+rmse.VCI.3to.45 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.3&NDVI.obs.VCINA$ndvi.obs<=0.45]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.3&NDVI.obs.VCINA$ndvi.obs<=0.45])^2))
+rmse.VCI.45to.6 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.45&NDVI.obs.VCINA$ndvi.obs<=0.6]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.45&NDVI.obs.VCINA$ndvi.obs<=0.6])^2))
+rmse.VCI.6to.75 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.6&NDVI.obs.VCINA$ndvi.obs<=0.75]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.6&NDVI.obs.VCINA$ndvi.obs<=0.75])^2))
+rmse.VCI.75to.9 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.75&NDVI.obs.VCINA$ndvi.obs<=0.9]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.75&NDVI.obs.VCINA$ndvi.obs<=0.9])^2))
+
+plot(ndvi.obs ~ predicted.VCI,xaxt="n", data=NDVI.obs.VCINA); abline(lm(ndvi.obs ~ predicted.VCI, data=NDVI.obs.VCINA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0621", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0439", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0481", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0393", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0295", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0295", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0433", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled Vegetation Condition Index", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+plot(ndvi.anomaly.VCI ~ predicted.VCI, data=NDVI.obs.VCINA); abline(a=0, b=0, col="red")
+
+
+ggplot(data=NDVI.obs.VCINA[NDVI.obs.VCINA$year>2010,])+
+  facet_wrap(~type)+
+  geom_line(aes(x=date, y=ndvi.obs, color="Observed NDVI")) +
+  geom_line(aes(x=date, y=predicted.VCI, color="NDVI modeled by VCI"))
+ 
