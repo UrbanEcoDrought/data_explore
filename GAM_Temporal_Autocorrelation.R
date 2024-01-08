@@ -334,3 +334,56 @@ plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly 
 plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
 plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
 plot(ndvi.anomaly.3day.ave.model~predicted.3d.ave, main="Scatterplot of anomaly vs. predicted values");abline(a=0, b=0, col="red")
+
+
+#################################
+#Creating Vegetation Condition Index (VCI) to determine the NDVI in comparison to doy normal
+#creating minimum NDVI for each doy by lc type
+ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min <- ave(ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs, ChicagolandTempSPEISPINDVIVPDNA$doy, ChicagolandTempSPEISPINDVIVPDNA$type, FUN = min)
+
+#creating maximum NDVI for each doy by lc type
+ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max <- ave(ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs, ChicagolandTempSPEISPINDVIVPDNA$doy, ChicagolandTempSPEISPINDVIVPDNA$type, FUN = max)
+
+#creating VCI
+ChicagolandTempSPEISPINDVIVPDNA$VCI <- ((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min)/(ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min))
+
+#trying to plot 7x11 grid of lowest VCI (worst vegetation condition) to compare years by lc type 
+Lowest_VCI_by_Year_LC_Type <- ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2010 & ChicagolandTempSPEISPINDVIVPDNA$VCI<0.1,]) +
+  facet_wrap(~year+type, ncol=7, nrow=11) +
+  geom_line(aes(x=doy, y=ndvi.obs, color="Observed NDVI"), size=0.5) +
+  geom_point(aes(x=doy, y=VCI, color="VCI"), size=0.5)
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/Low.VCI.by.LC.types.png", unit="in", height = 30, width = 20, res = 300)
+plot(Lowest_VCI_by_Year_LC_Type)
+dev.off()
+
+Lowest_VCI_by_LC_Type_Year <- ggplot(data=ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$year>2010 & ChicagolandTempSPEISPINDVIVPDNA$VCI<0.1,]) +
+  facet_wrap(~type+year, ncol=11, nrow=7) +
+  geom_line(aes(x=doy, y=ndvi.obs, color="Observed NDVI"), size=0.5) +
+  geom_point(aes(x=doy, y=VCI, color="VCI"), size=0.5)
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/Low.VCI.by.LC.types.png", unit="in", height = 20, width = 30, res = 300)
+plot(Lowest_VCI_by_LC_Type_Year)
+dev.off()
+
+###############################
+#Incorporating VCI into gam model
+gam.fitted.VCI <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + s(VCI, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI)
+
+gam.fitted.VCI.doy <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + s(VCI, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.doy)
+AIC(gam.fitted.TMIN30.doy.interact.SPEI.X14d, gam.fitted.TMIN30.doy.interact.SPEI.X14d2,gam.fitted.TMIN30.doy.interact.SPEI.X14d3,gam.fitted.TMIN30.doy.interact.SPEI.X14d4, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.1d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.2d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.ave, gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.5d.ave, gam.fitted.VCI, gam.fitted.VCI.doy)
+
+#Hopefully removing missing values for predict functionality
+gam.fitted.VCI <- gam(ndvi.obs ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + s(VCI, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML', na.rm=T)
+summary(gam.fitted.VCI)
+
+#replacement has 14023 rows, data has 14033
+#ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI <- predict(gam.fitted.VCI)
+
+#replacement has 14023 rows, data has 14033...will try refitting the model with na.action=na.exclude
+#ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.doy <- predict(gam.fitted.VCI.doy)
+#rmse.VCI.doy <- sqrt(mean((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs - ChicagolandTempSPEISPINDVIVPDNA$ )^2))
+
+
