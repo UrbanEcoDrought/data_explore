@@ -430,4 +430,13 @@ ggplot(data=NDVI.obs.VCINA[NDVI.obs.VCINA$year>2010,])+
   facet_wrap(~type)+
   geom_line(aes(x=date, y=ndvi.obs, color="Observed NDVI")) +
   geom_line(aes(x=date, y=predicted.VCI, color="NDVI modeled by VCI"))
- 
+
+####################
+
+#Using VCI as response variable (~15 minutes run time)
+gam.fitted.VCI.as.response <- gam(VCI ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML', na.rm=T)
+summary(gam.fitted.VCI.as.response)
+
+#Adding 3 day average NDVI as predictor to VCI as response variable
+gam.fitted.VCI.as.response.3.day.ave <- gam(VCI ~ s(TMIN30d, doy, by=type) + s(SPEI.X14d, doy, by=type) + s(NDVI.obs.t.minus.3d.ave , by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML', na.rm=T)
+summary(gam.fitted.VCI.as.response.3.day.ave)
