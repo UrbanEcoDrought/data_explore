@@ -269,3 +269,18 @@ summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp.precip)
 gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp.precip.year <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d, by=type) + s(VPD) + s(TMIN60d, SPEI.X60d, by=year) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp.precip.year)
 
+gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d) + s(VPD) + s(TMIN60d, SPEI.X60d) + s(ndvi.obs, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy)
+
+gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d) + s(VPD) + s(TMIN60d, SPEI.X60d) + s(ndvi.obs, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs)
+
+####################
+#Creating autocorrelation plots
+acf.ndvi = subset(ChicagolandTempSPEISPINDVIVPDNA, select = -c(ndvi.modeled, ndvi.anomaly, Unneeded.Date, Date.x, Date.y, ndvi.doy.max, ndvi.doy.min) )
+ndvi.ts <- ts(acf.ndvi, start=c(2001, 1), end=c(2021, 12), frequency=12)
+
+ndvi.autocorrelation <- acf(ndvi.ts, lag.max=NULL, type=c("correlation"), plot=TRUE, na.action=na.fail, demean=TRUE)
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/autocorrelation.png", unit="in", height = 20, width = 20, res = 300)
+plot(ndvi.autocorrelation)
+dev.off()
