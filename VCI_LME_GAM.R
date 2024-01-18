@@ -274,6 +274,16 @@ summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy)
 
 gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d) + s(VPD) + s(TMIN60d, SPEI.X60d) + s(ndvi.obs, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
 summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs)
+AIC(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact, gam.fitted.VCI.SPEI60.TMIN60d.noVPD, gam.fitted.VCI.SPEI60.TMAX90d, gam.fitted.VCI.SPEI60.TMAX30d, gam.fitted.VCI.SPEI60.TMIN60d, gam.fitted.VCI.SPEI60.TMAX14d, gam.fitted.VCI.SPEI60.TMAX60d, gam.fitted.VCI.SPEI60.TMIN60d.interact, gam.fitted.VCI.SPEI60.TMIN60d.interact.year)
+
+gam.fitted.VCI.SPEI60.TMIN60d.interact.year.ndvi.obs <- gam(VCI ~ s(year) + s(SPEI.X60d, doy, by=type) + s(TMIN60d, doy, by=type) + s(ndvi.obs, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary.gam.fitted.VCI.SPEI60.TMIN60d.interact.year.ndvi.obs<-summary(gam.fitted.VCI.SPEI60.TMIN60d.interact.year.ndvi.obs)
+
+gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d, doy, by=type) + s(VPD) + s(TMIN60d, SPEI.X60d, doy, by=type) + s(ndvi.obs, doy, by=type) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions)
+
+AIC(gam.fitted.VCI.SPEI60.TMIN60d.interact.year.ndvi.obs, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact, gam.fitted.VCI.SPEI60.TMIN60d.noVPD, gam.fitted.VCI.SPEI60.TMAX90d, gam.fitted.VCI.SPEI60.TMAX30d, gam.fitted.VCI.SPEI60.TMIN60d, gam.fitted.VCI.SPEI60.TMAX14d, gam.fitted.VCI.SPEI60.TMAX60d, gam.fitted.VCI.SPEI60.TMIN60d.interact, gam.fitted.VCI.SPEI60.TMIN60d.interact.year)
+
 
 ####################
 #Creating autocorrelation plots
@@ -284,3 +294,74 @@ ndvi.autocorrelation <- acf(ndvi.ts, lag.max=NULL, type=c("correlation"), plot=T
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/autocorrelation.png", unit="in", height = 20, width = 20, res = 300)
 plot(ndvi.autocorrelation)
 dev.off()
+
+###################
+#Checking SPI
+
+gam.fitted.VCI.x14d.SPI.type <- gam(VCI ~ s(year) + s(X14d.SPI) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x14d.SPI.type)
+
+gam.fitted.VCI.x30d.SPI.type <- gam(VCI ~ s(year) + s(X30d.SPI) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x30d.SPI.type)
+
+gam.fitted.VCI.x60d.SPI.type <- gam(VCI ~ s(year) + s(X60d.SPI) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x60d.SPI.type)
+
+gam.fitted.VCI.x90d.SPI.type <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMIN30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type)
+
+gam.fitted.VCI.x90d.SPI.type.TMIN14 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMIN14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMIN14)
+
+gam.fitted.VCI.x90d.SPI.type.TMIN60 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMIN60d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMIN60)
+
+gam.fitted.VCI.x90d.SPI.type.TMIN90 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMIN90d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMIN90)
+
+gam.fitted.VCI.x90d.SPI.type.TMAX90 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMAX90d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMAX90)
+
+gam.fitted.VCI.x90d.SPI.type.TMAX60 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMAX60d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMAX60)
+
+gam.fitted.VCI.x90d.SPI.type.TMAX30 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMAX30d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMAX30)
+
+gam.fitted.VCI.x90d.SPI.type.TMAX14 <- gam(VCI ~ s(year) + s(X90d.SPI) + s(VPD) + s(TMAX14d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.type.TMAX14)
+
+AIC(gam.fitted.VCI.SPEI60.TMIN60d.type, gam.fitted.VCI.SPEI60.type, gam.fitted.VCI.x90d.SPI.type.TMIN90, gam.fitted.VCI.x90d.SPI.type, gam.fitted.VCI.x90d.SPI.type.TMIN60, gam.fitted.VCI.x90d.SPI.type.TMIN14, gam.fitted.VCI.x90d.SPI.type.TMAX14, gam.fitted.VCI.x90d.SPI.type.TMAX90, gam.fitted.VCI.x90d.SPI.type.TMAX60, gam.fitted.VCI.x90d.SPI.type.TMAX30)
+
+#GAM gives best results with SPIx90d and TMIN60
+#retrying earlier gams with x90SPI
+
+gam.fitted.VCI.x90d.SPI.TMIN60d.temp.precip.interact <- gam(VCI ~ s(year) + s(X90d.SPI, TMIN60d) + s(VPD) + s(TMIN60d, X90d.SPI), data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.TMIN60d.temp.precip.interact)
+
+gam.fitted.VCI.x90d.SPI.TMIN60d.temp.precip.interact.type <- gam(VCI ~ s(year) + s(X90d.SPI, TMIN60d) + s(VPD) + s(TMIN60d, X90d.SPI) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.x90d.SPI.TMIN60d.temp.precip.interact.type)
+
+AIC(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact, gam.fitted.VCI.SPEI60.TMIN60d.noVPD, gam.fitted.VCI.SPEI60.TMAX90d, gam.fitted.VCI.SPEI60.TMAX30d, gam.fitted.VCI.SPEI60.TMIN60d, gam.fitted.VCI.SPEI60.TMAX14d, gam.fitted.VCI.SPEI60.TMAX60d, gam.fitted.VCI.SPEI60.TMIN60d.interact, gam.fitted.VCI.SPEI60.TMIN60d.interact.year)
+
+gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp <- gam(VCI ~ s(year) + s(SPEI.X60d, TMIN60d, by=type) + s(VPD) + s(TMIN60d, SPEI.X60d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp)
+
+gam.fitted.VCI.SPEI60.TMIN60d.type <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN60d) + type, data = ChicagolandTempSPEISPINDVIVPDNA, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.type)
+
+AIC(gam.fitted.VCI.SPEI60.TMIN60d.type, gam.fitted.VCI.SPEI60.type, gam.fitted.VCI.x90d.SPI.type.TMIN60, gam.fitted.VCI.x90d.SPI.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact, gam.fitted.VCI.SPEI60.TMIN60d.noVPD, gam.fitted.VCI.SPEI60.TMAX90d, gam.fitted.VCI.SPEI60.TMAX30d, gam.fitted.VCI.SPEI60.TMIN60d, gam.fitted.VCI.SPEI60.TMAX14d, gam.fitted.VCI.SPEI60.TMAX60d, gam.fitted.VCI.SPEI60.TMIN60d.interact, gam.fitted.VCI.SPEI60.TMIN60d.interact.year)
+
+##################
+#Check rmse for VCI gam model
+ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy <- predict(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy )
+ChicagolandTempSPEISPINDVIVPDNA$ndvi.anomaly.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy <- resid(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy)
+
+rmse.VCI.SPEI.TMIN60d.temp.precip.interact.type.ndvi.obs.doy <- sqrt(mean((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs- ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy )^2))
+
+ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions <- predict(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions )
+ChicagolandTempSPEISPINDVIVPDNA$ndvi.anomaly.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions <- resid(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions)
+
+rmse.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions <- sqrt(mean((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs- ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions )^2))
+
+gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions
