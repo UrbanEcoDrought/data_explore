@@ -2,7 +2,6 @@ Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 #Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
-library(nlme)
 library(mgcv)
 
 #subsetting data frame by land cover type and running GAM at different VCI ranges
