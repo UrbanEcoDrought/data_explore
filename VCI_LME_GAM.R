@@ -75,6 +75,8 @@ summary(ChicagolandTempSPEISPINDVIVPDNA)
 ChicagolandTempSPEISPINDVIVPDNA <- na.omit(ChicagolandTempSPEISPINDVIVPDNA)
 summary(ChicagolandTempSPEISPINDVIVPDNA)
 
+saveRDS(ChicagolandData, file.path(google.drive, "data/r_files/input_files/data_explore"))
+
 ChicagolandTempSPEISPINDVIVPDNA$month <- lubridate::month(ChicagolandTempSPEISPINDVIVPDNA$date)
 days.use <- unique(ChicagolandTempSPEISPINDVIVPDNA$doy[ChicagolandTempSPEISPINDVIVPDNA$month >=3 & ChicagolandTempSPEISPINDVIVPDNA$month <=9])
 days.use 
@@ -364,4 +366,51 @@ ChicagolandTempSPEISPINDVIVPDNA$ndvi.anomaly.VCI.SPEI60.TMIN60d.temp.precip.ndvi
 
 rmse.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions <- sqrt(mean((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs- ChicagolandTempSPEISPINDVIVPDNA$predicted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions )^2))
 
-gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions
+############
+#Rerunning GAM during grow season
+ChicagolandGrowSeason <- subset(ChicagolandTempSPEISPINDVIVPDNA[ChicagolandTempSPEISPINDVIVPDNA$doy>=91 & ChicagolandTempSPEISPINDVIVPDNA$doy<=304,])
+
+gam.fitted.VCI.SPEI60.TMIN60d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN60d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMAX60d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMAX60d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMAX60d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX60d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN60d, TMAX60d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX60d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN60d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX30d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN60d, TMAX30d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN60d.interact.TMAX30d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMAX60d.interact.TMIN30d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMAX60d, TMIN30d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMAX60d.interact.TMIN30d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMIN30d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN30d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN30d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI60.TMIN14d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X60d) + s(VPD) + s(TMIN14d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI60.TMIN14d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI30.TMIN60d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d) + s(VPD) + s(TMIN60d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI30.TMIN60d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI14.TMIN60d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X14d) + s(VPD) + s(TMIN60d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI14.TMIN60d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI90.TMIN60d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X90d) + s(VPD) + s(TMIN60d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI90.TMIN60d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI30.TMAX60d.interact.TMIN14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d) + s(VPD) + s(TMAX60d, TMIN14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI30.TMAX60d.interact.TMIN14d.type.grow.season)
+
+gam.fitted.VCI.SPEI30.TMIN60d.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d) + s(VPD) + s(TMIN60d) + s(TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI30.TMIN60d.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI30.interact.TMIN60d.interact.TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d, TMAX14d) + s(VPD) + s(TMIN60d, TMAX14d) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI30.interact.TMIN60d.interact.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.SPEI30.interactions.TMIN60d..TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d, TMIN60d, doy, by=type) + s(VPD) + s(TMIN60d, TMAX14d, doy, by=type) + type, data = ChicagolandGrowSeason, method = 'REML')
+summary(gam.fitted.VCI.SPEI30.interactions.TMIN60d.TMAX14d.type.grow.season)
