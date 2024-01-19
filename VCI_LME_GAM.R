@@ -414,3 +414,5 @@ summary(gam.fitted.VCI.SPEI30.interact.TMIN60d.interact.TMAX14d.type.grow.season
 
 gam.fitted.VCI.SPEI30.interactions.TMIN60d..TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d, TMIN60d, doy, by=type) + s(VPD) + s(TMIN60d, TMAX14d, doy, by=type) + type, data = ChicagolandGrowSeason, method = 'REML')
 summary(gam.fitted.VCI.SPEI30.interactions.TMIN60d.TMAX14d.type.grow.season)
+
+gam.fitted.VCI.double.penalty <- gam(VCI ~ s(year) + s(X14d.SPI) + s(X30d.SPI) + s(X60d.SPI) + s(X90d.SPI) + s(SPEI.X14d) + s(SPEI.X30d) + s(SPEI.X60d) + s(SPEI.X90d) + s(TMIN14d) + s(TMIN30d)+ s(TMIN60d)+ s(TMIN90d) + s(TMAX14d) + s(TMAX30d)+ s(TMAX60d)+ s(TMAX90d) + s(VPD) + type, data=ChicagolandGrowSeason, select=TRUE, method = 'REML')
