@@ -286,16 +286,33 @@ summary(gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions)
 
 AIC(gam.fitted.VCI.SPEI60.TMIN60d.interact.year.ndvi.obs, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.ndvi.obs.doy.interactions, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs.doy, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.ndvi.obs, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type.temp, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact.type, gam.fitted.VCI.SPEI60.TMIN60d.temp.precip.interact, gam.fitted.VCI.SPEI60.TMIN60d.noVPD, gam.fitted.VCI.SPEI60.TMAX90d, gam.fitted.VCI.SPEI60.TMAX30d, gam.fitted.VCI.SPEI60.TMIN60d, gam.fitted.VCI.SPEI60.TMAX14d, gam.fitted.VCI.SPEI60.TMAX60d, gam.fitted.VCI.SPEI60.TMIN60d.interact, gam.fitted.VCI.SPEI60.TMIN60d.interact.year)
 
-
 ####################
 #Creating autocorrelation plots
 acf.ndvi = subset(ChicagolandTempSPEISPINDVIVPDNA, select = -c(ndvi.modeled, ndvi.anomaly, Unneeded.Date, Date.x, Date.y, ndvi.doy.max, ndvi.doy.min) )
 ndvi.ts <- ts(acf.ndvi, start=c(2001, 1), end=c(2021, 12), frequency=12)
 
 ndvi.autocorrelation <- acf(ndvi.ts, lag.max=NULL, type=c("correlation"), plot=TRUE, na.action=na.fail, demean=TRUE)
+
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/autocorrelation.png", unit="in", height = 20, width = 20, res = 300)
 plot(ndvi.autocorrelation)
 dev.off()
+
+#Reducing variables in autocorrelation plots
+acf.VCI = subset(ChicagolandTempSPEISPINDVIVPDNA, select = c(date, VCI) )
+VCI.ts <- ts(acf.VCI, start=c(2001, 1), end=c(2021, 12), frequency=12)
+VCI.autocorrelation <- acf(VCI.ts, lag.max=NULL, type=c("correlation"), plot=TRUE, na.action=na.fail, demean=TRUE)
+
+acf(ChicagolandTempSPEISPINDVIVPDNA$VCI)
+
+#Trying ACF grouped by type
+library(tidyverse)
+LCGroupedNDVI <-ChicagolandTempSPEISPINDVIVPDNA %>%
+  group_by(type) %>%
+  nest()%>%
+  mutate(data=map(data, ~acf(., lag.max=1, type="correlation", plot=F))) %>%
+  mutate(data = map(data, ~as.data.frame(rbind(.x$acf[1,,], .x$acf[2,,])))) %>%
+  unnest(data)
+
 
 ###################
 #Checking SPI
