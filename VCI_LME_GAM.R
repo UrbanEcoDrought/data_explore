@@ -515,3 +515,12 @@ summary(gam.fitted.VCI.double.penalty.low.VCI.all.variables.grassland)
 
 gam.fitted.VCI.double.penalty.low.VCI.wo.variables.grassland <-gam(VCI ~ s(year) + s(X14d.SPI) + s(X30d.SPI) + s(X60d.SPI) + s(SPEI.X60d) + s(SPEI.X90d) + s(TMIN30d)+ s(TMIN60d) + s(TMAX60d) + s(VPD), data=ChicagolandGrowSeason[ChicagolandGrowSeason$VCI<=0.5 & ChicagolandGrowSeason$type=='grassland',], select=TRUE, method = 'REML')
 summary(gam.fitted.VCI.double.penalty.low.VCI.wo.variables.grassland)
+
+########################
+#Create plot of frequency of ndvi readings by doy for one land cover type
+
+doy.count.of.points.grow.season <- hist(ChicagolandGrowSeasonCrop$doy, breaks=seq(90, 305, 1), xlim=c(90,305), ylim=c(0, 10), xlab='Day of Year', ylab="Frequency", main='Count of Points for Each Day of the Year During the Grow Season')
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/doy_count_of_points.png", unit="in", height = 20, width = 40, res = 100)
+plot(doy.count.of.points.grow.season)
+dev.off()
