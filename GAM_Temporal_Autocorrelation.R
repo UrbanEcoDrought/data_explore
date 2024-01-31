@@ -195,6 +195,8 @@ summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
 
 plot(gam.fitted.interact.SPEI14.TMIN30.doy, select = 2, shade = TRUE, shade.col = "hotpink")
 
+
+
 ChicagolandTempSPEISPINDVIVPDNA$predicted <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
 ChicagolandTempSPEISPINDVIVPDNA$resids <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d)
 plot(ndvi.obs ~ predicted, data=ChicagolandTempSPEISPINDVIVPDNA); abline(a=0, b=1, col="red")
@@ -261,13 +263,18 @@ summary(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
 
 NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave <- predict(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
 NDVI.obs.t.minus.3d.aveNA$resids.3d.ave <- resid(gam.fitted.TMIN30.doy.interact.SPEI.X14d.NDVI.lag.t.minus.3d.aveNA)
-plot(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
+plot(predicted.3d.ave ~ ndvi.obs, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
 plot(resids.3d.ave ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
 plot(resids.3d.ave ~ SPEI.X14d, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
-plot(ndvi.anomaly.3day.ave.model ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
-plot(ndvi.obs ~ predicted.3d.ave,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+plot(resids.3d.ave ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
+plot(predicted.3d.ave~ndvi.obs,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
 #previous plot by land cover type
-plot(ndvi.obs ~ predicted.3d.ave,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+predicted.obs.3.d.ave.rmse <- plot(predicted.3d.ave ~ ndvi.obs,xaxt="n", data=NDVI.obs.t.minus.3d.aveNA); abline(lm(ndvi.obs ~ predicted.3d.ave, data=NDVI.obs.t.minus.3d.aveNA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Observed NDVI", tick="FALSE", line=1); axis(2, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1)
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/GAM_Summaries/predicted.obs.3.d.ave.rmse", unit="in", height = 10, width = 20, res = 300)
+plot(predicted.obs.3.d.ave.rmse)
+dev.off()
+
 plot(ndvi.anomaly ~ resids.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
 
 
@@ -422,7 +429,7 @@ rmse.VCI.45to.6 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.
 rmse.VCI.6to.75 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.6&NDVI.obs.VCINA$ndvi.obs<=0.75]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.6&NDVI.obs.VCINA$ndvi.obs<=0.75])^2))
 rmse.VCI.75to.9 <- sqrt(mean((NDVI.obs.VCINA$ndvi.obs[NDVI.obs.VCINA$ndvi.obs>0.75&NDVI.obs.VCINA$ndvi.obs<=0.9]-NDVI.obs.VCINA$predicted.VCI[NDVI.obs.VCINA$ndvi.obs>0.75&NDVI.obs.VCINA$ndvi.obs<=0.9])^2))
 
-plot(ndvi.obs ~ predicted.VCI,xaxt="n", data=NDVI.obs.VCINA); abline(lm(ndvi.obs ~ predicted.VCI, data=NDVI.obs.VCINA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0621", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0439", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0481", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0393", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0295", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0295", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0433", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled Vegetation Condition Index", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+plot(predicted.VCI~ndvi.obs,xaxt="n", data=NDVI.obs.VCINA); abline(lm(ndvi.obs ~ predicted.VCI, data=NDVI.obs.VCINA), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0621", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0439", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0481", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0393", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0295", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0295", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0433", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled Vegetation Condition Index", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
 plot(ndvi.anomaly.VCI ~ predicted.VCI, data=NDVI.obs.VCINA); abline(a=0, b=0, col="red")
 
 
