@@ -145,26 +145,61 @@ png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tst
 plot(tstat.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types)
 dev.off()
 
+start.end <- c(182, 244)
+
+tstat.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(TYPE~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=t.stat)) +
+  scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
+  labs(title = "July/August t.stat of Response (NDVI.obs and VCI) and All Predictors for All LC Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/tstat.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug.png", unit="in", height = 20, width = 10, res = 300)
+plot(tstat.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug)
+dev.off()
+
 r2_NDVI.obs_VCI.all.SPI_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
   facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=r.sq.m)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
-  labs(title = "r2 of Response (NDVI.obs and VCI) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
+  labs(title = "r2 of Response (NDVI.obs and VCI) and All Predictors for All LC Types when p-value is significant")
 
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/r2_NDVI.obs_VCI.all.SPI_VPD_LC.types.png", unit="in", height = 20, width = 10, res = 300)
 plot(r2_NDVI.obs_VCI.all.SPI_VPD_LC.types)
+dev.off()
+
+start.end <- c(182, 244)
+
+r2.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(TYPE~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=r.sq.m)) +
+  scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
+  labs(title = "July/August r2 of Response (NDVI.obs and VCI) and Predictors for All LC Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/r2.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug.png", unit="in", height = 20, width = 10, res = 300)
+plot(r2.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug)
 dev.off()
 
 AIC_NDVI.obs_VCI.all.SPI_VPD_LC.types <- ggplot(mod.out[mod.out$p.val<0.05,]) +
   facet_grid(TYPE~RESP) +
   geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
   scale_x_continuous(breaks=month.breaks$doy, labels=month.breaks$month)+
-  labs(title = "AIC of Response (NDVI.obs and VCI) and Predictors (all SPI and VPD) for All Lc Types when p-value is significant")
+  labs(title = "AIC of Response (NDVI.obs and VCI) and All Predictors for All LC Types when p-value is significant")
 
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/AIC_NDVI.obs_VCI.all.SPI_VPD_LC.types.png", unit="in", height = 20, width = 10, res = 300)
 plot(AIC_NDVI.obs_VCI.all.SPI_VPD_LC.types)
 dev.off()
 
+start.end <- c(182, 244)
+
+AIC.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug <- ggplot(mod.out[mod.out$p.val<0.05,]) +
+  facet_grid(TYPE~RESP) +
+  geom_tile(aes(x=DOY, y=PRED, fill=AIC)) +
+  scale_x_continuous(limits=start.end, breaks=month.july.august$doy, labels=month.july.august$month)+
+  labs(title = "July/August AIC Of Response (NDVI.obs and VCI) and All Predictors for All LC Types when p-value is significant")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/LME tstats/AIC.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug.png", unit="in", height = 20, width = 10, res = 300)
+plot(AIC.NDVI.obs.VCI.SPI.SPEI.VPD.Temp.LC.types.july.aug)
+dev.off()
 #####################################################
 
 library(nlme)
@@ -434,23 +469,28 @@ summary(gam.fitted.VCI.SPEI30.interact.TMIN60d.interact2.TMAX14d.type.grow.seaso
 
 #Creating diagnostic plots for best fit VCI model
 
-rmse.VCI.interact2 <- sqrt(mean((NDVI.obs.t.minus.3d.aveNA$ndvi.obs-NDVI.obs.t.minus.3d.aveNA$predicted.3d.ave)^2))
-rmse.VCI.interact2.obs.0to.15 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs<=0.15]-ChicagolandGrowSeason$predicted.3d.ave[ChicagolandGrowSeason$ndvi.obs<=0.15])^2))
-rmse.VCI.interact2.obs.15to.3 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs>0.15&ChicagolandGrowSeason$ndvi.obs<=0.3]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$ndvi.obs>0.15&ChicagolandGrowSeason$ndvi.obs<=0.3])^2))
-rmse.VCI.interact2.obs.3to.45 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs>0.3&ChicagolandGrowSeason$ndvi.obs<=0.45]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$ndvi.obs>0.3&ChicagolandGrowSeason$ndvi.obs<=0.45])^2))
-rmse.VCI.interact2.obs.45to.6 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs>0.45&ChicagolandGrowSeason$ndvi.obs<=0.6]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$ndvi.obs>0.45&ChicagolandGrowSeason$ndvi.obs<=0.6])^2))
-rmse.VCI.interact2.obs.6to.75 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs>0.6&ChicagolandGrowSeason$ndvi.obs<=0.75]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$ndvi.obs>0.6&ChicagolandGrowSeason$ndvi.obs<=0.75])^2))
-rmse.VCI.interact2.obs.75to.9 <- sqrt(mean((ChicagolandGrowSeason$ndvi.obs[ChicagolandGrowSeason$ndvi.obs>0.75&ChicagolandGrowSeason$ndvi.obs<=0.9]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$ndvi.obs>0.75&ChicagolandGrowSeason$ndvi.obs<=0.9])^2))
-
-
 ChicagolandGrowSeason$predicted.VCI.interact2 <- predict(gam.fitted.VCI.SPEI30.interact.TMIN60d.interact2.TMAX14d.type.grow.season)
 ChicagolandGrowSeason$resids.VCI.interact2 <- resid(gam.fitted.VCI.SPEI30.interact.TMIN60d.interact2.TMAX14d.type.grow.season)
-plot(predicted.VCI.interact2 ~ ndvi.obs, data=ChicagolandGrowSeason); abline(a=0, b=1, col="red")
+modeled.obs.VCI.interact2 <- plot(predicted.VCI.interact2 ~ VCI, data=ChicagolandGrowSeason); abline(a=0, b=1, col="red")
+
+png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/GAM_Summaries/modeled.obs.VCI.interact2", unit="in", height = 10, width = 20, res = 300)
+plot(modeled.obs.VCI.interact2)
+dev.off()
+
 plot(resids.VCI.interact2 ~ predicted.VCI.interact2, data=ChicagolandGrowSeason); abline(a=0, b=0, col="red")
-plot(resids.VCI.interact2 ~ predicted.VCI.interact2, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=0, col="red")
-plot(predicted.VCI.interact2~ndvi.obs,xaxt="n", data=ChicagolandGrowSeason); abline(lm(ndvi.obs ~ predicted.VCI.interact2, data=ChicagolandGrowSeason), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
-#previous plot by land cover type
-predicted.obs.VCI.interact2 <- plot(predicted.3d.ave ~ ndvi.obs,xaxt="n", data=ChicagolandGrowSeason); abline(lm(ndvi.obs ~ predicted.VCI.interact2, data=ChicagolandGrowSeason), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Observed NDVI", tick="FALSE", line=1); axis(2, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1)
+
+rmse.VCI.interact2 <- sqrt(mean((ChicagolandGrowSeason$VCI-ChicagolandGrowSeason$predicted.VCI.interact2)^2))
+rmse.VCI.interact2.obs.0to.15 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI<=0.15]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI<=0.15])^2))
+rmse.VCI.interact2.obs.15to.3 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.15&ChicagolandGrowSeason$VCI<=0.3]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.15&ChicagolandGrowSeason$VCI<=0.3])^2))
+rmse.VCI.interact2.obs.3to.45 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.3&ChicagolandGrowSeason$VCI<=0.45]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.3&ChicagolandGrowSeason$VCI<=0.45])^2))
+rmse.VCI.interact2.obs.45to.6 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.45&ChicagolandGrowSeason$VCI<=0.6]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.45&ChicagolandGrowSeason$VCI<=0.6])^2))
+rmse.VCI.interact2.obs.6to.75 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.6&ChicagolandGrowSeason$VCI<=0.75]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.6&ChicagolandGrowSeason$VCI<=0.75])^2))
+rmse.VCI.interact2.obs.75to.9 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.75&ChicagolandGrowSeason$VCI<=0.9]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.75&ChicagolandGrowSeason$VCI<=0.9])^2))
+rmse.VCI.interact2.obs.9to1 <- sqrt(mean((ChicagolandGrowSeason$VCI[ChicagolandGrowSeason$VCI>0.9&ChicagolandGrowSeason$VCI<=1]-ChicagolandGrowSeason$predicted.VCI.interact2[ChicagolandGrowSeason$VCI>0.9&ChicagolandGrowSeason$VCI<=1])^2))
+
+plot(predicted.VCI.interact2~VCI,xaxt="n", data=ChicagolandGrowSeason); abline(lm(VCI ~ predicted.VCI.interact2, data=ChicagolandGrowSeason), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); axis(1, at = seq(0, 1, by = 0.15), las=1); axis(1, (0.075),labels = "0.0752", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.0470", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.0555", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.0666", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.0522", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.0415", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.0562", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Predicted NDVI Modeled with Prior 3 day Average", tick="FALSE", line=1); axis(2, (0.42),labels = "Observed NDVI", tick="FALSE", line=1)
+
+predicted.obs.VCI.interact2 <- plot(predicted.VCI.interact2 ~ VCI,xaxt="n", data=ChicagolandGrowSeason); abline(lm(VCI ~ predicted.VCI.interact2, data=ChicagolandGrowSeason), col="red"); abline(v=0); abline(v=0.15); abline(v= 0.3); abline(v= 0.45); abline(v=0.6); abline(v= 0.75); abline(v=0.90); abline(v=1.0); axis(1, at = seq(0, 1.0, by = 0.15), las=1.15); axis(1, (0.075),labels = "0.409", tick="FALSE", line=-27); axis(1, (0.225),labels = "0.270", tick="FALSE", line=-27); axis(1, (0.375),labels = "0.185", tick="FALSE", line=-27); axis(1, (at=0.525),labels = "0.158", tick="FALSE", line=-27); axis(1, (0.675),labels = "0.204", tick="FALSE", line=-27); axis(1, (0.825),labels = "0.283", tick="FALSE", line=-27); axis(1, (0.95),labels = "0.376", tick="FALSE", line=-27); axis(1, (-0.05),labels = "RMSE", tick="FALSE", line=-27); axis(1, (0.42),labels = "Model Average RMSE = 0.313", tick="FALSE", line=-28.5); axis(1, (0.42),labels = "Observed VCI", tick="FALSE", line=1); axis(2, (0.42),labels = "Predicted VCI Modeled with Interact2", tick="FALSE", line=1)
 
 png(file="G:/Shared drives/Urban Ecological Drought/data/r_files/figures/GAM_Summaries/predicted.obs.VCI.interact2e", unit="in", height = 10, width = 20, res = 300)
 plot(predicted.obs.VCI.interact2)
@@ -458,8 +498,12 @@ dev.off()
 
 plot(ndvi.anomaly ~ resids.3d.ave, data=NDVI.obs.t.minus.3d.aveNA); abline(a=0, b=1, col="red")
 
+ggplot(data=ChicagolandGrowSeason[ChicagolandGrowSeason$year>2010,])+
+  facet_wrap(~type)+
+  geom_line(aes(x=date, y=VCI, color="VCI")) +
+  geom_line(aes(x=date, y=predicted.VCI.interact2, color="Predicted VCI"))
 
-
+####################
 gam.fitted.VCI.SPEI30.interactions.TMIN60d..TMAX14d.type.grow.season <- gam(VCI ~ s(year) + s(SPEI.X30d, TMIN60d, doy, by=type) + s(VPD) + s(TMIN60d, TMAX14d, doy, by=type) + type, data = ChicagolandGrowSeason, method = 'REML')
 summary(gam.fitted.VCI.SPEI30.interactions.TMIN60d.TMAX14d.type.grow.season)
 
