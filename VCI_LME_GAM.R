@@ -71,6 +71,35 @@ ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max <- ave(ChicagolandTempSPEISPINDVIVP
 ChicagolandTempSPEISPINDVIVPDNA$VCI <- ((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min)/(ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min))
 summary(ChicagolandTempSPEISPINDVIVPDNA)
 
+#creating 3 day minimum NDVI for each doy by lc type
+
+lc.type <- unique(ChicagolandTempSPEISPINDVIVPDNA$type) 
+doyrange <- 99:301
+ChicagolandTempSPEISPINDVIVPDNA$VCI.3day<-NA
+
+for(t in 1:length(lc.type)) {
+  for(d in 2:(length(doy)-1)){
+    Threedaywindow <- subset(ChicagolandTempSPEISPINDVIVPDNA,
+                             type==lc.type[t]&doy>(doyrange[d]-2)&doy<(doyrange[d]+2))
+    ndvi.3daymin<-min(Threedaywindow$ndvi.obs)
+    ndvi.3daymax<-max(Threedaywindow$ndvi.obs)
+    years<-unique(Threedaywindow$year[which(Threedaywindow$doy==doyrange[d])])
+    
+    for(y in 1:length(years)){
+      
+      obs<-Threedaywindow$ndvi.obs[which(Threedaywindow$doy==doyrange[d]&Threedaywindow$year==years[y])]
+      VCI3day<-((obs - ndvi.3daymin)/(ndvi.3daymax - ndvi.3daymin))
+      index<-which(ChicagolandTempSPEISPINDVIVPDNA$type==lc.type[t]&ChicagolandTempSPEISPINDVIVPDNA$doy==doyrange[d]&ChicagolandTempSPEISPINDVIVPDNA$year==years[y])
+      ChicagolandTempSPEISPINDVIVPDNA$VCI.3day[index]<-VCI3day
+    }
+
+    
+  }
+
+  
+}
+
+
 #remove all NA values from dataframe (see if na.action in lme works)
 ChicagolandTempSPEISPINDVIVPDNA <- na.omit(ChicagolandTempSPEISPINDVIVPDNA)
 summary(ChicagolandTempSPEISPINDVIVPDNA)
