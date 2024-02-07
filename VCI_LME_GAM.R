@@ -71,6 +71,12 @@ ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max <- ave(ChicagolandTempSPEISPINDVIVP
 ChicagolandTempSPEISPINDVIVPDNA$VCI <- ((ChicagolandTempSPEISPINDVIVPDNA$ndvi.obs - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min)/(ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.max - ChicagolandTempSPEISPINDVIVPDNA$ndvi.doy.min))
 summary(ChicagolandTempSPEISPINDVIVPDNA)
 
+#remove all NA values from dataframe (see if na.action in lme works)
+ChicagolandTempSPEISPINDVIVPDNA <- na.omit(ChicagolandTempSPEISPINDVIVPDNA)
+summary(ChicagolandTempSPEISPINDVIVPDNA)
+
+saveRDS(ChicagolandTempSPEISPINDVIVPDNA, file.path(google.drive, "data/data_sets/ChicagolandData"))
+
 #creating 3 day minimum NDVI for each doy by lc type
 
 lc.type <- unique(ChicagolandTempSPEISPINDVIVPDNA$type) 
@@ -98,13 +104,7 @@ for(t in 1:length(lc.type)) {
 
   
 }
-
-
-#remove all NA values from dataframe (see if na.action in lme works)
-ChicagolandTempSPEISPINDVIVPDNA <- na.omit(ChicagolandTempSPEISPINDVIVPDNA)
-summary(ChicagolandTempSPEISPINDVIVPDNA)
-
-saveRDS(ChicagolandTempSPEISPINDVIVPDNA, file.path(google.drive, "data/data_sets/ChicagolandData"))
+##########creating for LME loop 
 
 ChicagolandTempSPEISPINDVIVPDNA$month <- lubridate::month(ChicagolandTempSPEISPINDVIVPDNA$date)
 days.use <- unique(ChicagolandTempSPEISPINDVIVPDNA$doy[ChicagolandTempSPEISPINDVIVPDNA$month >=3 & ChicagolandTempSPEISPINDVIVPDNA$month <=9])
