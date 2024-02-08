@@ -115,16 +115,24 @@ for(i in 1:nrow(mod.out)){
   mod.out[i,"coef.Tmin30"] <-sumMod$tTable["TMIN30d", "p-value"]
   mod.out[i, "r.sq.m"] <- MuMIn::r.squaredGLMM(modDay)[,"R2m"]
 
-  # Saving the predicted values
-  dat.tmp$NDVI.pred[!is.na(dat.tmp$X30d.SPI) & !is.na(dat.tmp$TMIN30d)] <- predict(modDay, newdata = dat.tmp[!is.na(dat.tmp$X30d.SPI) & !is.na(dat.tmp$TMIN30d),]) 
-
-  # writing the predicted values back into the main data frame
-  urbMed$NDVI.pred[rowNow] <- dat.tmp$NDVI.pred
-  
 }
 # summary(mod.out)
 head(mod.out)
 
+
+# Now predicting from the models --> we need to do this separately from fitting because we want ONE prediction per obs
+# This could be made more efficient 
+for(DAY in unique(urbMed$doy)){
+  if(DAY == 366) next # Skip leap day
+  rowNow <- which(urbMed$doy==DAY & !is.na(urbMed$X30d.SPI) & !is.na(urbMed$TMAX30d))
+  
+  if(length(rowNow)==0) next # Skip this row if we don't have the predictors we need
+  
+  modNow <- modsList[[DAY]]
+  urbMed$NDVI.pred[rowNow] <- predict(modNow, newdata=urbMed[rowNow,])
+  
+  
+}
 
 # Now looking at the output
 urbMed$month <- lubridate::month(urbMed$date)
@@ -132,8 +140,75 @@ urbMed$resid <- urbMed$NDVI - urbMed$NDVI.pred
 hist(urbMed$resid)
 summary(urbMed)
 
-# Looking at residuals by month
+# Doing some diagnostic plotting
+png(file.path(path.figs, "NDVI-Model_Residuals_byMonth.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed) +
-  facet_wrap(~Mo)
+  facet_wrap(~month) +
+  geom_histogram(aes(x=resid)) +
+  geom_vline(xintercept = 0, col="red2")
+dev.off()
 
+
+png(file.path(path.figs, "NDVI-Model_Pred-Obs_byMonth.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed) +
+  facet_wrap(~month) +
+  geom_point(aes(x=NDVI.pred, y=NDVI)) +
+  geom_abline(slope=1, intercept = 0, col="red2")
+dev.off()
+
+png(file.path(path.figs, "NDVI-Model_SPI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed) +
+  facet_wrap(~month) +
+  geom_point(aes(x=X30d.SPI, y=resid)) +
+  geom_hline(yintercept = 0, col="red2")
+dev.off()
+
+png(file.path(path.figs, "NDVI-Model_NDVI_2005.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed[urbMed$year==2005,]) +
+  ggtitle("NDVI in Year 2005 (drought year)") +
+  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  geom_point(aes(x=doy, y=NDVI, color="observed")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted"="orange2", normal="black")) +
+  theme_bw()
+dev.off()
+
+png(file.path(path.figs, "NDVI-Model_NDVI_2012.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed[urbMed$year==2012,]) +
+  ggtitle("NDVI in Year 2012 (drought year)") +
+  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  geom_point(aes(x=doy, y=NDVI, color="observed")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted"="orange2", normal="black")) +
+  theme_bw()
+dev.off()
+
+png(file.path(path.figs, "NDVI-Model_NDVI_2020.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed[urbMed$year==2020,]) +
+  ggtitle("NDVI in Year 2020 (non-drought year)") +
+  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  geom_point(aes(x=doy, y=NDVI, color="observed")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted"="dodgerblue2", normal="black")) +
+  theme_bw()
+dev.off()
+
+
+corPredObsJJA <- lm(NDVI ~ NDVI.pred, data=urbMed[urbMed$doy>=yday(as.Date("2001-06-01")) & urbMed$doy<yday(as.Date("2001-09-01")),])
+summary(corPredObsJJA)
+
+png(file.path(path.figs, "NDVI-Model_Pred-Obs_JuneJulAug.png"), height=6, width=6, units="in", res=220)
+ggplot(data=urbMed[urbMed$doy>=yday(as.Date("2001-06-01")) & urbMed$doy<yday(as.Date("2001-09-01")),], aes(x=NDVI.pred, y=NDVI)) +
+  ggtitle("June-July-August NDVI with 1:1 line (pseudo-R2=0.79") +
+  geom_point() +
+  geom_abline(slope=1, intercept=0, color="red2") +
+  theme_bw()
+dev.off()
+  
 #########################################
