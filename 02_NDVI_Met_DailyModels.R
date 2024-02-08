@@ -116,7 +116,7 @@ for(i in 1:nrow(mod.out)){
   mod.out[i, "r.sq.m"] <- MuMIn::r.squaredGLMM(modDay)[,"R2m"]
 
 }
-# summary(mod.out)
+summary(mod.out)
 head(mod.out)
 
 
@@ -141,7 +141,7 @@ hist(urbMed$resid)
 summary(urbMed)
 
 # Doing some diagnostic plotting
-png(file.path(path.figs, "NDVI-Model_Residuals_byMonth.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_Residuals_byMonth.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed) +
   facet_wrap(~month) +
   geom_histogram(aes(x=resid)) +
@@ -149,21 +149,21 @@ ggplot(data=urbMed) +
 dev.off()
 
 
-png(file.path(path.figs, "NDVI-Model_Pred-Obs_byMonth.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_Pred-Obs_byMonth.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed) +
   facet_wrap(~month) +
   geom_point(aes(x=NDVI.pred, y=NDVI)) +
   geom_abline(slope=1, intercept = 0, col="red2")
 dev.off()
 
-png(file.path(path.figs, "NDVI-Model_SPI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_SPI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed) +
   facet_wrap(~month) +
   geom_point(aes(x=X30d.SPI, y=resid)) +
   geom_hline(yintercept = 0, col="red2")
 dev.off()
 
-png(file.path(path.figs, "NDVI-Model_NDVI_2005.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2005.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2005,]) +
   ggtitle("NDVI in Year 2005 (drought year)") +
   stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
@@ -175,7 +175,7 @@ ggplot(data=urbMed[urbMed$year==2005,]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "NDVI-Model_NDVI_2012.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2012.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2012,]) +
   ggtitle("NDVI in Year 2012 (drought year)") +
   stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
@@ -187,7 +187,7 @@ ggplot(data=urbMed[urbMed$year==2012,]) +
   theme_bw()
 dev.off()
 
-png(file.path(path.figs, "NDVI-Model_NDVI_2020.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2020.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2020,]) +
   ggtitle("NDVI in Year 2020 (non-drought year)") +
   stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
@@ -203,9 +203,9 @@ dev.off()
 corPredObsJJA <- lm(NDVI ~ NDVI.pred, data=urbMed[urbMed$doy>=yday(as.Date("2001-06-01")) & urbMed$doy<yday(as.Date("2001-09-01")),])
 summary(corPredObsJJA)
 
-png(file.path(path.figs, "NDVI-Model_Pred-Obs_JuneJulAug.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_Pred-Obs_JuneJulAug.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$doy>=yday(as.Date("2001-06-01")) & urbMed$doy<yday(as.Date("2001-09-01")),], aes(x=NDVI.pred, y=NDVI)) +
-  ggtitle("June-July-August NDVI with 1:1 line (pseudo-R2=0.79") +
+  ggtitle("June-July-August NDVI with 1:1 line (pseudo-R2=0.37") +
   geom_point() +
   geom_abline(slope=1, intercept=0, color="red2") +
   theme_bw()
