@@ -102,7 +102,7 @@ for(i in 1:nrow(mod.out)){
    
   
   # This is running a pretty basic model --> TMIN30d shouldn't have a big impact in the summer, but we'll keep it to see what happens
-  modDay <- nlme::lme(NDVI ~ X30d.SPI + TMIN30d, random=list(year=~1, satellite=~1), data=dat.tmp[,], na.action=na.omit)
+  modDay <- nlme::lme(NDVI ~ X30d.SPI + TMIN30d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
   modsList[[i]] <- modDay
   sumMod <- summary(modDay)
   # MuMIn::r.squaredGLMM(modDay)[,"R2m"]
