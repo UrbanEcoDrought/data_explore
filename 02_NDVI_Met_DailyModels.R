@@ -104,12 +104,14 @@ dev.off()
 # Starting with doing a simple model of NDVI ~ 
 days.use <- 1:365
 modsList <- list()
-modsPerst <- list()
+modsLag <- list()
+modsNorm <- list()
 
-mod.out <- data.frame(landcover="urban-medium", yday=1:365, intercept=NA, coef.Lag=NA, coef.SPEI30=NA, coef.Tmin30=NA, pVal.Lag=NA, pVal.SPEI30=NA, pVal.Tmin30=NA, r.sq.m=NA) 
+mod.out <- data.frame(landcover="urban-medium", yday=1:365, intercept=NA, coef.Lag=NA, coef.SPEI30=NA, coef.Tmin30=NA, pVal.Lag=NA, pVal.SPEI30=NA, pVal.Tmin30=NA, rSq.Process=NA, rSq.Lag=NA, rSq.Norm=NA) 
 
 urbMed$NDVI.pred <- NA # Setting up a palceholder for predicted values
-urbMed$NDVI.predPers <- NA # Setting up a palceholder for predicted values
+urbMed$NDVI.predLag <- NA # Setting up a palceholder for predicted values
+urbMed$NDVI.predNorm <- NA # Setting up a palceholder for predicted values
 # row.ind = 0 # Setting up an index that will tell us what row to save things in; we should start with 0 because we haven't done anything yet
 pb <- txtProgressBar(min=0, max=nrow(mod.out), style=3)
 for(i in 1:nrow(mod.out)){
@@ -129,9 +131,13 @@ for(i in 1:nrow(mod.out)){
   # ggplot(data=dat.tmp) + geom_violin(aes(x=as.factor(year), y=X30d.SPI, fill=satellite), scale="width")
   # ggplot(data=dat.tmp, aes(x=X30d.SPI, y=NDVI)) + geom_point(aes(color=satellite)) + stat_smooth(method="lm")
    
-  #Set up a persistence-only model
-  modP <- nlme::lme(NDVI ~NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
-  modsPerst[[i]] <- modP
+  #Set up a normal (intercept-only) model
+  modN <- nlme::lme(NDVI ~ 1, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
+  modsNorm[[i]] <- modN
+  
+  #Set up a lag-only model
+  modL <- nlme::lme(NDVI ~NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
+  modsLag[[i]] <- modL
   
   # This is running a pretty basic model --> TMIN30d shouldn't have a big impact in the summer, but we'll keep it to see what happens
   modDay <- nlme::lme(NDVI ~ X30d.SPEI + TMIN30d + NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
@@ -144,14 +150,42 @@ for(i in 1:nrow(mod.out)){
   mod.out[i,"coef.Lag"] <- modDay$coefficients$fixed["NDVI.Lag14d"]
   mod.out[i,"coef.SPEI30"] <- modDay$coefficients$fixed["X30d.SPEI"]
   mod.out[i,"coef.Tmin30"] <- modDay$coefficients$fixed["TMIN30d"]
+  mod.out[i,"tStat.Lag"] <- sumMod$tTable["NDVI.Lag14d", "t-value"]
+  mod.out[i,"tStat.SPEI30"] <- sumMod$tTable["X30d.SPEI", "t-value"]
+  mod.out[i,"tStat.Tmin30"] <- sumMod$tTable["TMIN30d", "t-value"]
   mod.out[i,"pVal.Lag"] <- sumMod$tTable["NDVI.Lag14d", "p-value"]
   mod.out[i,"pVal.SPEI30"] <- sumMod$tTable["X30d.SPEI", "p-value"]
   mod.out[i,"pVal.Tmin30"] <-sumMod$tTable["TMIN30d", "p-value"]
-  mod.out[i, "r.sq.m"] <- MuMIn::r.squaredGLMM(modDay)[,"R2m"]
-
+  mod.out[i, "rSq.Process"] <- MuMIn::r.squaredGLMM(modDay)[,"R2m"]
+  mod.out[i, "rSq.Lag"] <- MuMIn::r.squaredGLMM(modL)[,"R2m"]
+  mod.out[i, "rSq.Norm"] <- MuMIn::r.squaredGLMM(modN)[,"R2m"]
+  
 }
 summary(mod.out)
 head(mod.out)
+
+# Stacking so we can do a new daily corr figure
+effectStack <- stack(mod.out[,grep("tStat", names(mod.out))])
+names(effectStack) <- c("tStat", "effect")
+effectStack$doy <- mod.out$yday
+effectStack$effect <- gsub("tStat.", "", effectStack$effect) # making clean names
+effectStack$pVal <- stack(mod.out[,grep("pVal", names(mod.out))])[,"values"]
+effectStack$coef <- stack(mod.out[,grep("coef", names(mod.out))])[,"values"]
+
+summary(effectStack)
+png(file.path(path.figs, "NDVI-Model_UrbMed_Effects_SigOnly.png"), height=6, width=10, units="in", res=220)
+ggplot(data=effectStack[effectStack$pVal<0.05,]) +
+  geom_tile(aes(x=doy, y=effect, fill=tStat)) +
+  scale_fill_gradient2(low="orange2", high="green4", mid="gray80", midpoint=0) +
+  theme_bw()
+dev.off()
+
+png(file.path(path.figs, "NDVI-Model_UrbMed_Effects_All.png"), height=6, width=10, units="in", res=220)
+ggplot(data=effectStack[,]) +
+  geom_tile(aes(x=doy, y=effect, fill=tStat)) +
+  scale_fill_gradient2(low="orange2", high="green4", mid="gray80", midpoint=0) +
+  theme_bw()
+dev.off()
 
 
 # Now predicting from the models --> we need to do this separately from fitting because we want ONE prediction per obs
@@ -162,10 +196,9 @@ for(DAY in unique(urbMed$doy)){
   
   if(length(rowNow)==0) next # Skip this row if we don't have the predictors we need
   
-  modNow <- modsList[[DAY]]
-  modP <- modsPerst[[DAY]]
-  urbMed$NDVI.pred[rowNow] <- predict(modNow, newdata=urbMed[rowNow,])
-  urbMed$NDVI.predPers[rowNow] <- predict(modP, newdata=urbMed[rowNow,])
+  urbMed$NDVI.pred[rowNow] <- predict(modsList[[DAY]], newdata=urbMed[rowNow,])
+  urbMed$NDVI.predLag[rowNow] <- predict(modsLag[[DAY]], newdata=urbMed[rowNow,])
+  urbMed$NDVI.predNorm[rowNow] <- predict(modsNorm[[DAY]], newdata=urbMed[rowNow,])
   
   
 }
@@ -202,40 +235,39 @@ dev.off()
 png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2005.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2005,]) +
   ggtitle("NDVI in Year 2005 (drought year)") +
-  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
-  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
   theme_bw()
 dev.off()
 
 png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2012.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2012,]) +
   ggtitle("NDVI in Year 2012 (drought year)") +
-  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
-  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
   theme_bw()
 dev.off()
 
 png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2020.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2020,]) +
   ggtitle("NDVI in Year 2020 (non-drought year)") +
-  stat_smooth(data=urbMed[,], aes(x=doy, y=NDVI.pred, color="normal"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
-  geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
-  # scale_color_manual(values=c("observed"="red4", "predicted"="dodgerblue2", normal="black")) +
+  scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
   theme_bw()
 dev.off()
 
