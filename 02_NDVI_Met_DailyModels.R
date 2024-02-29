@@ -23,6 +23,7 @@ ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsa
 head(ndvi.all)
 summary(ndvi.all)
 
+
 # reading in Trent's SPI
 ChicagolandSPI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPI.csv"))
 ChicagolandSPEI <- read.csv(file.path(google.drive, "data/data_sets/Daily Meteorological Data/Chicagoland_Daily_SPEI.csv"))
@@ -41,6 +42,7 @@ dim(ChicagolandSPI); dim(ChicagolandSPEI); dim(ChicagolandTemp)
 
 ndviMet <- merge(ndvi.all, ChicagolandTemp, all.x=T, all.y=F)
 ndviMet <- merge(ndviMet, ChicagolandSPI, all.x=T, all.y=F)
+ndviMet <- merge(ndviMet, ChicagolandSPEI, all.x=T, all.y=F)
 summary(ndviMet)
 
 #########################################
@@ -48,6 +50,31 @@ summary(ndviMet)
 #########################################
 # Subset the data 
 urbMed <- ndviMet[ndviMet$type=="urban-medium",]
+
+# Checking the autocorrelation in NDVI
+head(urbMed)
+acf(urbMed$NDVI[!is.na(urbMed$NDVI)])
+acf(urbMed$resid[!is.na(urbMed$resid)]) # note: need to run below for this to work!
+
+
+# Creating a 14-day NDVI lag (day -14), that goes across satellites to try to bring in autocorrleation
+# May need a longer window, but we'll see
+urbMed$NDVI.Lag14d <- NA
+for(i in 1:nrow(urbMed)){
+  rowLag <- which(urbMed$date>=(urbMed$date[i]-14) & urbMed$date<urbMed$date[i])
+  
+  if(length(rowLag)<1 ) next
+  if(length(rowLag)==1) urbMed$NDVI.Lag14d[i] <- urbMed$NDVI[rowLag]
+  if(length(rowLag)>1) urbMed$NDVI.Lag14d[i] <- mean(urbMed$NDVI[rowLag], na.rm=T)
+  
+}
+summary(urbMed)
+
+ggplot(data=urbMed[urbMed$year==2020,]) +
+  ggtitle("Urban Medium; Year = 2012") +
+  # geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
+  geom_line(aes(x=doy, y=NDVI, group=satellite), color="black") +
+  geom_line(aes(x=doy, y=NDVI.Lag14d), color="gray50")
 
 
 # Do some quick graphs to check to make sure we can see a signal we're looking for
@@ -77,15 +104,17 @@ dev.off()
 # Starting with doing a simple model of NDVI ~ 
 days.use <- 1:365
 modsList <- list()
+modsPerst <- list()
 
-mod.out <- data.frame(landcover="urban-medium", yday=1:365, intercept=NA, coef.SPI30=NA, coef.Tmin30=NA, pVal.SPI30=NA, pVal.Tmin30=NA, r.sq.m=NA) 
+mod.out <- data.frame(landcover="urban-medium", yday=1:365, intercept=NA, coef.Lag=NA, coef.SPEI30=NA, coef.Tmin30=NA, pVal.Lag=NA, pVal.SPEI30=NA, pVal.Tmin30=NA, r.sq.m=NA) 
 
 urbMed$NDVI.pred <- NA # Setting up a palceholder for predicted values
+urbMed$NDVI.predPers <- NA # Setting up a palceholder for predicted values
 # row.ind = 0 # Setting up an index that will tell us what row to save things in; we should start with 0 because we haven't done anything yet
 pb <- txtProgressBar(min=0, max=nrow(mod.out), style=3)
 for(i in 1:nrow(mod.out)){
   setTxtProgressBar(pb, i)
-  # For testing using i=185 (which is July 4; yday(as.Date("2021-07-04"))) -- this is a period that should ahve a decent SPI relationship based off of the initial corr plots
+  # For testing using i=185 (which is July 4; yday(as.Date("2021-07-04"))) -- this is a period that should have a decent SPI relationship based off of the initial corr plots
   # dayNOW <- days.use[i] # This is almost exactly the same as above, but now i will go from 1 to 215 (the number of unique days.use we have)
   dayNOW = i # Repurposing old code, so doing a clunky approach here
   
@@ -100,19 +129,24 @@ for(i in 1:nrow(mod.out)){
   # ggplot(data=dat.tmp) + geom_violin(aes(x=as.factor(year), y=X30d.SPI, fill=satellite), scale="width")
   # ggplot(data=dat.tmp, aes(x=X30d.SPI, y=NDVI)) + geom_point(aes(color=satellite)) + stat_smooth(method="lm")
    
+  #Set up a persistence-only model
+  modP <- nlme::lme(NDVI ~NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
+  modsPerst[[i]] <- modP
   
   # This is running a pretty basic model --> TMIN30d shouldn't have a big impact in the summer, but we'll keep it to see what happens
-  modDay <- nlme::lme(NDVI ~ X30d.SPI + TMIN30d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
+  modDay <- nlme::lme(NDVI ~ X30d.SPEI + TMIN30d + NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
   modsList[[i]] <- modDay
   sumMod <- summary(modDay)
   # MuMIn::r.squaredGLMM(modDay)[,"R2m"]
 
   # Storing key stats about the model
   mod.out[i,"intercept"] <- modDay$coefficients$fixed["(Intercept)"]
-  mod.out[i,"coef.SPI30"] <- modDay$coefficients$fixed["X30d.SPI"]
+  mod.out[i,"coef.Lag"] <- modDay$coefficients$fixed["NDVI.Lag14d"]
+  mod.out[i,"coef.SPEI30"] <- modDay$coefficients$fixed["X30d.SPEI"]
   mod.out[i,"coef.Tmin30"] <- modDay$coefficients$fixed["TMIN30d"]
-  mod.out[i,"pVal.SPI30"] <- sumMod$tTable["X30d.SPI", "p-value"]
-  mod.out[i,"coef.Tmin30"] <-sumMod$tTable["TMIN30d", "p-value"]
+  mod.out[i,"pVal.Lag"] <- sumMod$tTable["NDVI.Lag14d", "p-value"]
+  mod.out[i,"pVal.SPEI30"] <- sumMod$tTable["X30d.SPEI", "p-value"]
+  mod.out[i,"pVal.Tmin30"] <-sumMod$tTable["TMIN30d", "p-value"]
   mod.out[i, "r.sq.m"] <- MuMIn::r.squaredGLMM(modDay)[,"R2m"]
 
 }
@@ -124,12 +158,14 @@ head(mod.out)
 # This could be made more efficient 
 for(DAY in unique(urbMed$doy)){
   if(DAY == 366) next # Skip leap day
-  rowNow <- which(urbMed$doy==DAY & !is.na(urbMed$X30d.SPI) & !is.na(urbMed$TMAX30d))
+  rowNow <- which(urbMed$doy==DAY & !is.na(urbMed$X30d.SPI) & !is.na(urbMed$TMAX30d) & !is.na(urbMed$NDVI.Lag14d))
   
   if(length(rowNow)==0) next # Skip this row if we don't have the predictors we need
   
   modNow <- modsList[[DAY]]
+  modP <- modsPerst[[DAY]]
   urbMed$NDVI.pred[rowNow] <- predict(modNow, newdata=urbMed[rowNow,])
+  urbMed$NDVI.predPers[rowNow] <- predict(modP, newdata=urbMed[rowNow,])
   
   
 }
@@ -156,10 +192,10 @@ ggplot(data=urbMed) +
   geom_abline(slope=1, intercept = 0, col="red2")
 dev.off()
 
-png(file.path(path.figs, "NDVI-Model_UrbMed_SPI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
+png(file.path(path.figs, "NDVI-Model_UrbMed_SPEI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed) +
   facet_wrap(~month) +
-  geom_point(aes(x=X30d.SPI, y=resid)) +
+  geom_point(aes(x=X30d.SPEI, y=resid)) +
   geom_hline(yintercept = 0, col="red2")
 dev.off()
 
@@ -170,8 +206,9 @@ ggplot(data=urbMed[urbMed$year==2005,]) +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
   geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted"="orange2", normal="black")) +
+  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
   theme_bw()
 dev.off()
 
@@ -182,8 +219,9 @@ ggplot(data=urbMed[urbMed$year==2012,]) +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
   geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted"="orange2", normal="black")) +
+  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
   theme_bw()
 dev.off()
 
@@ -194,8 +232,10 @@ ggplot(data=urbMed[urbMed$year==2020,]) +
   geom_point(aes(x=doy, y=NDVI, color="observed")) +
   geom_point(aes(x=doy, y=NDVI.pred, color="predicted")) +
   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted"), method="gam") +
-  scale_color_manual(values=c("observed"="red4", "predicted"="dodgerblue2", normal="black")) +
+  stat_smooth(aes(x=doy, y=NDVI.predPers, color="predicted-persistence"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted-persistence"="salmon2", "predicted-process"="orange2", normal="black")) +
+  # scale_color_manual(values=c("observed"="red4", "predicted"="dodgerblue2", normal="black")) +
   theme_bw()
 dev.off()
 
