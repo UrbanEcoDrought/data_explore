@@ -242,6 +242,7 @@ ggplot(data=urbMed[urbMed$year==2005,]) +
   stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
   scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_y_continuous(name="NDVI", limits=c(0, max(urbMed$NDVI, na.rm=T))) +
   theme_bw()
 dev.off()
 
@@ -255,6 +256,7 @@ ggplot(data=urbMed[urbMed$year==2012,]) +
   stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
   scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_y_continuous(name="NDVI", limits=c(0, max(urbMed$NDVI, na.rm=T))) +
   theme_bw()
 dev.off()
 
@@ -268,6 +270,7 @@ ggplot(data=urbMed[urbMed$year==2020,]) +
   stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
   scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_y_continuous(name="NDVI", limits=c(0, max(urbMed$NDVI, na.rm=T))) +
   theme_bw()
 dev.off()
 
