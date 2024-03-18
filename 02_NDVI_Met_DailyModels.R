@@ -246,6 +246,20 @@ ggplot(data=urbMed[urbMed$year==2005,]) +
   theme_bw()
 dev.off()
 
+ggplot(data=urbMed[urbMed$year==2021,]) +
+  # ggtitle("NDVI in Year 2005 (drought year)") +
+  stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
+  geom_point(aes(x=doy, y=NDVI, color="observed")) +
+  geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
+  stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
+  stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
+  scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
+  scale_y_continuous(name="NDVI", limits=c(0, max(urbMed$NDVI, na.rm=T))) +
+  theme_bw()
+
+
+
 png(file.path(path.figs, "NDVI-Model_UrbMed_NDVI_2012.png"), height=6, width=6, units="in", res=220)
 ggplot(data=urbMed[urbMed$year==2012,]) +
   ggtitle("NDVI in Year 2012 (drought year)") +
