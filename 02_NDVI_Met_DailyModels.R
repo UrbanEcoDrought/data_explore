@@ -45,6 +45,9 @@ ndviMet <- merge(ndviMet, ChicagolandSPI, all.x=T, all.y=F)
 ndviMet <- merge(ndviMet, ChicagolandSPEI, all.x=T, all.y=F)
 summary(ndviMet)
 
+# saving ndviMet to the data drive so that predictors are paired together with the NDVI data
+saveRDS(ndviMet, file = file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_metVars_combined.RDS"))
+write.csv(ndviMet, file = file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_metVars_combined.csv"), row.names=F)
 #########################################
 # Starting with just looking at urban medium through time ----
 #########################################
