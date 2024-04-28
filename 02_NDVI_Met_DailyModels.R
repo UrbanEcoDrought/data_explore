@@ -242,7 +242,7 @@ for(LC in unique(ndviMet$type)){
     geom_abline(slope=1, intercept = 0, col="red2"))
   dev.off()
   
-  png(file.path(path.figs, "NDVI-Model_datLC_SPEI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, "NDVI-Model_", LC, "_SPEI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
   print(ggplot(data=datLC) +
     ggtitle(LC) +
     facet_wrap(~month) +
