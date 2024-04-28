@@ -16,6 +16,7 @@ path.figs <- file.path(google.drive, "data/exploratory figures/daily models")
 if(!dir.exists(path.figs)) dir.create(path.figs)
 # path.landsat <- file.path(google.drive, "Neighborhood remote sensing analysis/Landsat NDVI")
 # dir(path.landsat)
+pathSave <- file.path(google.drive, "data/r_files/processed_files")
 
 # Going back to the raw landsat data -- lookgin for somethign that has the satellite attached to know it's raw.
 # # I don't know where this was created, but it's what we have -- we'll need to go back and figure this out at some point
@@ -52,13 +53,14 @@ write.csv(ndviMet, file = file.path(google.drive, "data/r_files/processed_files/
 # Starting with just looking at urban medium through time ----
 #########################################
 for(LC in unique(ndviMet$type)){
+  print(LC)
   # Subset the data 
   datLC <- ndviMet[ndviMet$type==LC,]
   
   # Checking the autocorrelation in NDVI
   head(datLC)
   acf(datLC$NDVI[!is.na(datLC$NDVI)])
-  acf(datLC$resid[!is.na(datLC$resid)]) # note: need to run below for this to work!
+  # acf(datLC$resid[!is.na(datLC$resid)]) # note: need to run below for this to work!
   
   
   # Creating a 14-day NDVI lag (day -14), that goes across satellites to try to bring in autocorrleation
@@ -74,32 +76,32 @@ for(LC in unique(ndviMet$type)){
   }
   summary(datLC)
   
-  ggplot(data=datLC[datLC$year==2020,]) +
-    ggtitle("Urban Medium; Year = 2012") +
-    # geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
-    geom_line(aes(x=doy, y=NDVI, group=satellite), color="black") +
-    geom_line(aes(x=doy, y=NDVI.Lag14d), color="gray50")
+  # ggplot(data=datLC[datLC$year==2020,]) +
+    # ggtitle(paste0(LC, "; Year = 2012")) +
+  #   # geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
+  #   geom_line(aes(x=doy, y=NDVI, group=satellite), color="black") +
+  #   geom_line(aes(x=doy, y=NDVI.Lag14d), color="gray50")
   
   
   # Do some quick graphs to check to make sure we can see a signal we're looking for
   # showing 2012 in black
-  png(file.path(path.figs, "NDVI_UrbanMedium_Raw_bySatellite_2012.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI_", LC, "_Raw_bySatellite_2012.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC, aes(x=doy, y=NDVI)) +
-    ggtitle("Urban Medium; Year = 2012") +
+    ggtitle(paste0(LC, "; Year = 2012")) +
     geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
     geom_line(data=datLC[datLC$year==2012,], aes(group=satellite), color="black")
   dev.off()
   
-  png(file.path(path.figs, "NDVI_UrbanMedium_Raw_bySatellite_2005.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs,  paste0("NDVI_", LC, "_Raw_bySatellite_2005.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC, aes(x=doy, y=NDVI)) +
-    ggtitle("Year = 2005") +
+    ggtitle(paste0(LC, "; Year = 2005")) +
     geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
     geom_line(data=datLC[datLC$year==2005,], aes(group=satellite), color="black")
   dev.off()
   
-  png(file.path(path.figs, "NDVI_UrbanMedium_Raw_bySatellite_2023.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs,  paste0("NDVI_", LC, "_Raw_bySatellite_2023.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC, aes(x=doy, y=NDVI)) +
-    ggtitle("Year = 2023") +
+    ggtitle(paste0(LC, "; Year = 2023")) +
     geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
     geom_line(data=datLC[datLC$year==2023,], aes(group=satellite), color="black")
   dev.off()
@@ -111,7 +113,7 @@ for(LC in unique(ndviMet$type)){
   modsLag <- list()
   modsNorm <- list()
   
-  mod.out <- data.frame(landcover="urban-medium", yday=1:365, intercept=NA, coef.Lag=NA, coef.SPEI30=NA, coef.Tmin30=NA, pVal.Lag=NA, pVal.SPEI30=NA, pVal.Tmin30=NA, rSq.Process=NA, rSq.Lag=NA, rSq.Norm=NA) 
+  mod.out <- data.frame(landcover=LC, yday=1:365, intercept=NA, coef.Lag=NA, coef.SPEI30=NA, coef.Tmin30=NA, pVal.Lag=NA, pVal.SPEI30=NA, pVal.Tmin30=NA, rSq.Process=NA, rSq.Lag=NA, rSq.Norm=NA) 
   
   datLC$NDVI.pred <- NA # Setting up a palceholder for predicted values
   datLC$NDVI.predLag <- NA # Setting up a palceholder for predicted values
@@ -168,6 +170,8 @@ for(LC in unique(ndviMet$type)){
   summary(mod.out)
   head(mod.out)
   
+  write.csv(mod.out, file.path(pathSave, paste0("DailyModel_Stats_", LC, ".csv")), row.names=F)
+  
   # Stacking so we can do a new daily corr figure
   effectStack <- stack(mod.out[,grep("tStat", names(mod.out))])
   names(effectStack) <- c("tStat", "effect")
@@ -177,15 +181,17 @@ for(LC in unique(ndviMet$type)){
   effectStack$coef <- stack(mod.out[,grep("coef", names(mod.out))])[,"values"]
   
   summary(effectStack)
-  png(file.path(path.figs, "NDVI-Model_datLC_Effects_SigOnly.png"), height=6, width=10, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_Effects_SigOnly.png")), height=6, width=10, units="in", res=220)
   ggplot(data=effectStack[effectStack$pVal<0.05,]) +
+    ggtitle(LC) +
     geom_tile(aes(x=doy, y=effect, fill=tStat)) +
     scale_fill_gradient2(low="orange2", high="green4", mid="gray80", midpoint=0) +
     theme_bw()
   dev.off()
   
-  png(file.path(path.figs, "NDVI-Model_datLC_Effects_All.png"), height=6, width=10, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_Effects_All.png")), height=6, width=10, units="in", res=220)
   ggplot(data=effectStack[,]) +
+    ggtitle(LC) +
     geom_tile(aes(x=doy, y=effect, fill=tStat)) +
     scale_fill_gradient2(low="orange2", high="green4", mid="gray80", midpoint=0) +
     theme_bw()
@@ -213,17 +219,22 @@ for(LC in unique(ndviMet$type)){
   hist(datLC$resid)
   summary(datLC)
   
+  write.csv(datLC, file.path(pathSave, paste0("DailyModel_NDVI-predict_", LC, ".csv")), row.names=F)
+  
+  
   # Doing some diagnostic plotting
-  png(file.path(path.figs, "NDVI-Model_datLC_Residuals_byMonth.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_Residuals_byMonth.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC) +
+    ggtitle(LC) +
     facet_wrap(~month) +
     geom_histogram(aes(x=resid)) +
     geom_vline(xintercept = 0, col="red2")
   dev.off()
   
   
-  png(file.path(path.figs, "NDVI-Model_datLC_Pred-Obs_byMonth.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_Pred-Obs_byMonth.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC) +
+    ggtitle(LC) +
     facet_wrap(~month) +
     geom_point(aes(x=NDVI.pred, y=NDVI)) +
     geom_abline(slope=1, intercept = 0, col="red2")
@@ -231,14 +242,15 @@ for(LC in unique(ndviMet$type)){
   
   png(file.path(path.figs, "NDVI-Model_datLC_SPEI30-Resid_byMonth.png"), height=6, width=6, units="in", res=220)
   ggplot(data=datLC) +
+    ggtitle(LC) +
     facet_wrap(~month) +
     geom_point(aes(x=X30d.SPEI, y=resid)) +
     geom_hline(yintercept = 0, col="red2")
   dev.off()
   
-  png(file.path(path.figs, "NDVI-Model_datLC_NDVI_2005.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_NDVI_2005.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC[datLC$year==2005,]) +
-    ggtitle("NDVI in Year 2005 (drought year)") +
+    ggtitle(paste0(LC, " NDVI in Year 2005 (drought year)")) +
     stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
     geom_point(aes(x=doy, y=NDVI, color="observed")) +
     geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
@@ -250,23 +262,23 @@ for(LC in unique(ndviMet$type)){
     theme_bw()
   dev.off()
   
-  ggplot(data=datLC[datLC$year==2021,]) +
-    # ggtitle("NDVI in Year 2005 (drought year)") +
-    stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
-    geom_point(aes(x=doy, y=NDVI, color="observed")) +
-    geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
-    stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
-    stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
-    stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
-    scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
-    scale_y_continuous(name="NDVI", limits=c(0, max(datLC$NDVI, na.rm=T))) +
-    theme_bw()
+  # ggplot(data=datLC[datLC$year==2021,]) +
+  #   ggtitle(paste0(LC, " NDVI in Year 2021 (drought year)")) +
+  #   stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
+  #   geom_point(aes(x=doy, y=NDVI, color="observed")) +
+  #   geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
+  #   stat_smooth(aes(x=doy, y=NDVI, color="observed"), method="gam") +
+  #   stat_smooth(aes(x=doy, y=NDVI.predLag, color="predicted-lag only"), method="gam") +
+  #   stat_smooth(aes(x=doy, y=NDVI.pred, color="predicted-process"), method="gam") +
+  #   scale_color_manual(values=c("observed"="red4", "predicted-lag only"="salmon2", "predicted-process"="orange2", normal="black")) +
+  #   scale_y_continuous(name="NDVI", limits=c(0, max(datLC$NDVI, na.rm=T))) +
+  #   theme_bw()
   
   
   
-  png(file.path(path.figs, "NDVI-Model_datLC_NDVI_2012.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_NDVI_2012.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC[datLC$year==2012,]) +
-    ggtitle("NDVI in Year 2012 (drought year)") +
+    ggtitle(paste0(LC, " NDVI in Year 2012 (drought year)")) +
     stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
     geom_point(aes(x=doy, y=NDVI, color="observed")) +
     geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
@@ -278,9 +290,9 @@ for(LC in unique(ndviMet$type)){
     theme_bw()
   dev.off()
   
-  png(file.path(path.figs, "NDVI-Model_datLC_NDVI_2020.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_NDVI_2020.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC[datLC$year==2020,]) +
-    ggtitle("NDVI in Year 2020 (non-drought year)") +
+    ggtitle(paste0(LC, " NDVI in Year 2020 (non-drought year)")) +
     stat_smooth(aes(x=doy, y=NDVI.predNorm, color="normal"), method="gam") +
     geom_point(aes(x=doy, y=NDVI, color="observed")) +
     geom_point(aes(x=doy, y=NDVI.pred, color="predicted-process")) +
@@ -294,14 +306,16 @@ for(LC in unique(ndviMet$type)){
   
   
   corPredObsJJA <- lm(NDVI ~ NDVI.pred, data=datLC[datLC$doy>=yday(as.Date("2001-06-01")) & datLC$doy<yday(as.Date("2001-09-01")),])
-  summary(corPredObsJJA)
+  summary(corPredObsJJA)$r.squared
   
-  png(file.path(path.figs, "NDVI-Model_datLC_Pred-Obs_JuneJulAug.png"), height=6, width=6, units="in", res=220)
+  png(file.path(path.figs, paste0("NDVI-Model_", LC, "_Pred-Obs_JuneJulAug.png")), height=6, width=6, units="in", res=220)
   ggplot(data=datLC[datLC$doy>=yday(as.Date("2001-06-01")) & datLC$doy<yday(as.Date("2001-09-01")),], aes(x=NDVI.pred, y=NDVI)) +
-    ggtitle("June-July-August NDVI with 1:1 line (pseudo-R2=0.37") +
+    ggtitle(paste0(LC, ": June-July-August NDVI with 1:1 line (pseudo-R2=", round(summary(corPredObsJJA)$r.squared, 2), ")")) +
     geom_point() +
     geom_abline(slope=1, intercept=0, color="red2") +
     theme_bw()
   dev.off()
+  
+  print("") # Just kicking the label to a new line to make things cleaner
 } 
 #########################################
