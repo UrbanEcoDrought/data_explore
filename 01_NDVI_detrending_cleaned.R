@@ -22,9 +22,57 @@ month.breaks.short <- data.frame(doy = c(1, 91, 182, 274),
 ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
 head(ndvi.all)
 
+# wanting to see how many missing dates we actually have throughout the year- this can affect the VCI calculation.
+# creating a continuous timeline of dates
+time.all <- data.frame(date = seq(ymd('2001-01-05'), ymd("2023-08-16"), by="1 day"))
+time.all$doy <- yday(time.all$date)
+time.all$year <- year(time.all$date)
+summary(time.all)
+
+# merging together to look at missing data
+time.check <- merge(ndvi.all, time.all, by=c("date", "doy", "year"), all=T)
+summary(time.check)
+
+time.check$NDVI[is.na(time.check$NDVI)] <- -99
+
+ggplot(data=time.check) + facet_grid(type~year)+
+  geom_point(aes(x=doy, y=NDVI, col=satellite))
 
 
-################################
+
+length(time.check$NDVI[!is.na(time.check$type) & !is.na(time.check$satellite)])
+length(time.check$NDVI[!is.na(time.check$type) & !is.na(time.check$satellite) & time.check$NDVI == -99])
+
+dim(time.check)
+
+# checking growing season data
+time.check$month <- month(time.check$date)
+tc.gs <- time.check[!is.na(time.check$type) & !is.na(time.check$satellite) & time.check$month %in% c(4:9),]
+
+nrow(tc.gs)
+nrow(tc.gs[tc.gs$NDVI==-99,])
+
+ndvi.na.check <- aggregate(NDVI~doy+satellite, FUN=length, data=ndvi.all)
+
+ggplot(data=ndvi.all) + facet_wrap(type~.)+
+  geom_histogram(aes(x=doy, fill=satellite), binwidth = 1)
+
+
+# seeing if we can correct for differences among satellites with referencing to lansat 8
+ls8.dat <- ndvi.all[ndvi.all$satellite=="Landsat8",]
+ls9.dat <- ndvi.all[ndvi.all$satellite=="Landsat9",]
+
+
+ggplot() + facet_wrap(type~.)+ 
+  labs(title="Landsat8") +
+  geom_line(data=ls8.dat, aes(x=doy, y=NDVI, col=as.factor(year)))
+
+
+# seeing some differences across satellites. I think we will want to account for this when making an anomaly time series
+
+summary(ndvi.all)
+
+###############################
 # Fancy detrending----
 
 
@@ -60,6 +108,70 @@ summary(ndvi.check.all)
 ndvi.detrend <- ndvi.check.all[,c("year", "doy", "type", "date", "NDVI", "ndvi.modeled", "ndvi.anomaly")]
 names(ndvi.detrend) <- c("year", "doy", "type", "date", "ndvi.obs", "ndvi.modeled","ndvi.anomaly")
 
+summary(ndvi.detrend)
+
+# calculating a moving average by cover type from the left to help smooth out some of the jumpiness in the observations
+library(zoo)
+ndvi.detrend2 <- NULL
+for(i in unique(ndvi.detrend$type)){
+  temp <- ndvi.detrend[ndvi.detrend$type==i,]
+  temp <- temp[order(temp$date, decreasing = F),]
+  
+  temp$obs.smooth <- rollapply(temp$ndvi.obs, width = 6, align="right", FUN=mean, na.rm=T, fill=NA) # not smoothing on a temporal window, but rather an observation frequency window
+  temp$anom.smooth <- rollapply(temp$ndvi.anomaly, width = 6, align="right", FUN=mean, na.rm=T, fill=NA)
+  
+  if(is.null(ndvi.detrend2)) ndvi.detrend2 <- temp else ndvi.detrend2 <- rbind(ndvi.detrend2, temp)
+}
+
+summary(ndvi.detrend2)
+
+png(filename = "figures/ndvi_obs_smooth.png", height = 11, width = 15, res = 300, units = "in")
+ggplot(ndvi.detrend2[ndvi.detrend2$year %in% c(2011, 2012) & ndvi.detrend2$type=="forest",]) + facet_wrap(type~.) +
+  labs(title="NDVI Observation series with 6obs smoother") +
+  geom_vline(xintercept=as.Date("2012-01-01"), linetype="dashed", col="maroon")+
+  geom_line(aes(x=date, y=ndvi.obs), col="black") +
+  geom_line(aes(x=date, y=obs.smooth), col="dodgerblue", linewidth=1.2)+
+  theme_bw()
+dev.off()  
+
+png(filename = "figures/ndvi_anomaly_smooth.png", height = 11, width = 15, res = 300, units = "in")
+ggplot(ndvi.detrend2[ndvi.detrend2$year %in% c(2011, 2012) & ndvi.detrend2$type=="forest",]) + facet_wrap(type~.) +
+  labs(title="NDVI Anomaly series with 6obs smoother") +
+  geom_hline(yintercept = 0, linetype="dashed") +
+  geom_vline(xintercept=as.Date("2012-01-01"), linetype="dashed", col="maroon") +
+  geom_line(aes(x=date, y=ndvi.anomaly), col="black") +
+  geom_line(aes(x=date, y=anom.smooth), col="dodgerblue", linewidth=1.2)+
+  theme_bw()
+dev.off() 
+
+ggplot(ndvi.detrend2[ndvi.detrend2$year %in% c(2011, 2012) & ndvi.detrend2$type=="forest",]) + facet_wrap(type~.) +
+  labs(title="NDVI Anomaly series with 6obs smoother") +
+  geom_hline(yintercept = 1.0, linetype="dashed") +
+  geom_vline(xintercept=as.Date("2012-01-01"), linetype="dashed", col="maroon") +
+  geom_line(aes(x=date, y=ndvi.obs/ndvi.modeled), col="black") +
+  #geom_line(aes(x=date, y=anom.smooth), col="dodgerblue", linewidth=1.2)+
+  theme_bw()
+
+#######################################################
+
+# adding in steps to calculate the SD of each cover type to then standardize the data by the SD present in the cover type
+sd.df <- data.frame(type = unique(ndvi.detrend$type))
+for(i in unique(ndvi.detrend$type)){
+  temp <- ndvi.detrend[ndvi.detrend$type==i,"ndvi.anomaly"]
+  sd.df[sd.df$type==i, "ndvi.anom.sd"] <- sd(temp, na.rm=T)
+  
+}
+
+# dividing the anomaly by the standard deviation
+for(i in unique(sd.df$type)){
+  temp <- ndvi.detrend[ndvi.detrend$type==i,]
+  ndvi.detrend[ndvi.detrend$type==i, "ndvi.anom.scale"] <- temp$ndvi.anomaly/sd.df$ndvi.anom.sd[sd.df$type==i]
+}
+
+summary(ndvi.detrend)
+
+# adding a month variable
+ndvi.detrend$month <- month(ndvi.detrend$date)
 saveRDS(ndvi.detrend, file = file.path(google.drive, "data/r_files/processed_files/ndvi_detrended_df.RDS"))
 
 
@@ -74,7 +186,7 @@ ggplot(data = ndvi.detrend) + facet_wrap(type~.) +
 # looking at just urban-medium detrended with years broken out
 ggplot(data = ndvi.detrend[ndvi.detrend$type=="urban-medium",]) + facet_wrap(year~.) +
   geom_line(aes(x=doy, y=ndvi.anomaly, col=as.factor(year))) +
-  geom_hline(yintercept=0, linetype="dashed")
+  geom_hline(yintercept=0, linetype="dashed")+
   labs(title = "Urban Medium Land Cover NDVI Anomaly by Year")
 
 # DIAGNOSTIC PLOT
@@ -131,3 +243,23 @@ dev.off() # shut down the link to the save file
 png(filename=file.path(google.drive, "data/r_files/figures/diagnostic_plots/diagnostic_ndvi_residuals_grow_season.png"), height=8, width = 8, unit = "in", res=300)
 diag.resid.grow.season # call the graphic object
 dev.off() # shut down the link to the save file
+
+###################################################
+# Looking at the anomaly time series
+ggplot(data=ndvi.detrend) + facet_grid(type~.) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  #geom_line(aes(x=date, y=ndvi.anomaly), col="blue")+
+  geom_path(aes(x=date, y=ndvi.anom.scale), col="forestgreen")
+
+
+# looking at 2005, 2012, and 2023
+
+ggplot(data=ndvi.detrend[ndvi.detrend$year %in% c(2005, 2012, 2023) & ndvi.detrend$month %in% c(4:9),])+ facet_wrap(type~.) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  geom_point(aes(x=doy, y=ndvi.obs, col=as.factor(year)))
+
+
+ggplot(data=ndvi.detrend[ndvi.detrend$year %in% c(2005, 2012, 2023) & ndvi.detrend$month %in% c(4:9),])+ facet_wrap(type~.) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  geom_point(aes(x=doy, y=ndvi.anom.scale, col=as.factor(year)))+
+  geom_smooth(aes(x=doy, y=ndvi.anom.scale, col=as.factor(year)))
