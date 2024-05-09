@@ -172,7 +172,7 @@ for(LC in unique(ndviMet$type)){
   summary(mod.out)
   head(mod.out)
   
-  write.csv(mod.out, file.path(pathSave, paste0("DailyModel_Stats_", LC, ".csv")), row.names=F)
+  write.csv(mod.out, file.path(pathSave, paste0("daily_models/DailyModel_Stats_", LC, ".csv")), row.names=F)
   
   # Stacking so we can do a new daily corr figure
   effectStack <- stack(mod.out[,grep("tStat", names(mod.out))])
@@ -226,7 +226,7 @@ for(LC in unique(ndviMet$type)){
   hist(datLC$resid)
   summary(datLC)
   
-  write.csv(datLC, file.path(pathSave, paste0("DailyModel_NDVI-predict_", LC, ".csv")), row.names=F)
+  write.csv(datLC, file.path(pathSave, paste0("daily_models/DailyModel_NDVI-predict_", LC, ".csv")), row.names=F)
   
   
   # Doing some diagnostic plotting
