@@ -40,3 +40,10 @@ ndvi.all.ml$type <- as.factor(ndvi.all.ml$type)
 summary(ndvi.all.ml)
 
 saveRDS(ndvi.all.ml, file.path(google.drive, "data/r_files/processed_files/ndviAll_ml_data.RDS"))
+
+
+# making plots to see what I see.
+
+# ggplot(data=ndvi.all.ml[ndvi.all.ml$year %in% 2012,]) + facet_wrap(type~.) +
+#   geom_hline(yintercept=0, linetype="dashed") +
+#   geom_point(aes(x=date, y=resid.NDVIlag), col=ifelse(ndvi.all.ml$resid.NDVIlag[ndvi.all.ml$year %in% 2012] >0,"forestgreen", "orange3"))
