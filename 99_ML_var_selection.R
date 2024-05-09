@@ -13,13 +13,32 @@ google.drive <- Sys.getenv("GOOGLE_DRIVE")
 ndvi.dat <- readRDS(file.path(google.drive, "data/r_files/processed_files/ndviAll_ml_data.RDS"))
 
 # parsing down dataset to the predictor and applicable response vars
-vars.remove <- c("NDVI", "NDVI.predLag", "date", "year", "satellite") # change vars here.
+vars.remove <- c("NDVI", "NDVI.predLag", "date", "year") # change vars here.
 
-ndvi.dat.short <-ndvi.dat[ndvi.dat$type %in% c("urban-medium") & complete.cases(ndvi.dat),!names(ndvi.dat) %in% vars.remove]
+ndvi.dat.short <-ndvi.dat[complete.cases(ndvi.dat),!names(ndvi.dat) %in% vars.remove]
 summary(ndvi.dat.short)
 
-ndvi.dat.short <- ndvi.dat.short[,!names(ndvi.dat.short) %in% "type"]
 # Random Forests----
+# pulling in Lindsay's code here
+library(tidyverse)
+library(tidylog)
+library(randomForest)  #Random forests
+library(units)         #Change units in spatial work
+library(pdp)           #Partial dependence plots
+library(vip)           #Variable importance plots
+library(rpart)
+library(rpart.plot)
+
+randoAll<-randomForest(resid.NDVIlag~., data=ndvi.dat.short[ndvi.dat.short$type=="forest" & ndvi.dat.short$doy %in% c(100),], mtry = 6, ntree = 500) # building a model off of the residual of obs-persistance model
+randoAll #72% variance explained
+
+AllVIP<- vip(randoAll, include_type = TRUE, horizontal = TRUE, 
+             aesthetics = list(fill = '#2a2e38'), num_features = 15) +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+AllVIP
+
 
 
 # nnet package----
@@ -27,8 +46,12 @@ ndvi.dat.short <- ndvi.dat.short[,!names(ndvi.dat.short) %in% "type"]
 library(nnet)
 library(caret)
 
-# Define the formula 
-# myformula <- resid.NDVIlag ~ .
+# caret has issues with factors. Need to create dummy variables for them
+summary(ndvi.dat.short)
+
+head(model.matrix(satellite~.,data=ndvi.dat.short))
+dummy.sat <- dummyVars(satellite~.,data=ndvi.dat.short)
+head(predict(dummy.sat, newdata=ndvi.dat.short))
 
 predictors <- names(ndvi.dat.short)[!names(ndvi.dat.short) %in% c("resid.NDVIlag")]
 res.var <- "resid.NDVIlag"
