@@ -8,7 +8,7 @@ lc.list <- c("urban-high", "urban-medium", "urban-low", "urban-open", "crop", "f
 
 # Setting the file paths. This may be different for your computer.
 Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
-Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
+# Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 path.files <- file.path(google.drive, "data/r_files/processed_files/daily_models")
