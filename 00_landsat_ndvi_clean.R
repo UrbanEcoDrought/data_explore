@@ -1,45 +1,52 @@
 # organizing the various NDVI products that Christy produced from GEE
 # pulling in data from googledrive
 library(ggplot2)
+Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 
-Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+# Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
+pathDat <- file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract")
 
-file.names <- dir(file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract"))
-file.names
+lcnames <- c("forest", "crop", "grassland", "urban-high", "urban-medium", "urban-low", "urban-open")
 
-lc.types <- unique( stringr::str_split_i(file.names, "_", 2))
+ndviAll <- data.frame()
+for(LCTYPE in lcnames){
+  fileL8 <- dir(file.path(pathDat), paste0("Landsat8_", LCTYPE))[length(dir(pathDat, paste0("Landsat8_", LCTYPE)))]
+  fileL9 <- dir(file.path(pathDat), paste0("Landsat9_", LCTYPE))[length(dir(pathDat, paste0("Landsat9_", LCTYPE)))]
+  fileL7 <- dir(file.path(pathDat), paste0("Landsat7_", LCTYPE))[length(dir(pathDat, paste0("Landsat7_", LCTYPE)))]
+  fileL5 <- dir(file.path(pathDat), paste0("Landsat5_", LCTYPE))[length(dir(pathDat, paste0("Landsat5_", LCTYPE)))]
 
-# test run to see what the file structure looks like.
-test <- read.csv(file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract/Landsat5_crop_2023_08_24_10_14_09.csv"), header=T)
-head(test)
-
-# reading in each individual .csv file and compiling into a single object
-ndvi.all <- NULL
-for(i in 1:length(file.names)){
-  ndvi.temp <- read.csv(file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract/", file.names[i]), header=T)
+  landsat8 <- read.csv(file.path(pathDat, fileL8))
+  landsat9 <- read.csv(file.path(pathDat, fileL9))
+  landsat7 <- read.csv(file.path(pathDat, fileL7))
+  landsat5 <- read.csv(file.path(pathDat, fileL5))
   
-  ndvi.temp$type <- as.factor(stringr::str_split_i(file.names[i], "_", 2)) # pulling in the land cover type from file name
-  ndvi.temp$satellite <- as.factor(stringr::str_split_i(file.names[i], "_", 1)) # pulling in the collection satellite name
-  if(is.null(ndvi.all)) ndvi.all <- ndvi.temp else ndvi.all <- rbind(ndvi.all, ndvi.temp) # compiling into a single object
+  landsat8$satellite <- "landsat 8"
+  landsat9$satellite <- "landsat 9"
+  landsat7$satellite <- "landsat 7"
+  landsat5$satellite <- "landsat 5"
   
+  landsatAll <- rbind(landsat8, landsat9, landsat7, landsat5)
+  # landsatAll <- rbind(landsat8, landsat9)
+  landsatAll$type <- LCTYPE
+  
+  ndviAll <- rbind(ndviAll, landsatAll)
 }
+summary(ndviAll)
 
-head(ndvi.all)
-summary(ndvi.all)
 
 # setting date as date
-ndvi.all$date <- lubridate::as_date(ndvi.all$date)
+ndviAll$date <- lubridate::as_date(ndviAll$date)
 
 # creating a year variable for easier subsetting
-ndvi.all$year <- lubridate::year(ndvi.all$date)
+ndviAll$year <- lubridate::year(ndviAll$date)
 
 # creatign a day of year variable in case it is useful
-ndvi.all$doy <- lubridate::yday(ndvi.all$date)
-head(ndvi.all)
+ndviAll$doy <- lubridate::yday(ndviAll$date)
+head(ndviAll)
 
-ggplot(data=ndvi.all) + facet_wrap(type~.) +
+ggplot(data=ndviAll) + facet_wrap(type~.) +
   geom_point(aes(x=date, y=NDVI, col=satellite))
 
-saveRDS(ndvi.all, file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
+saveRDS(ndviAll, file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))

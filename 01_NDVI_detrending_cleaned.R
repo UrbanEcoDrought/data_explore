@@ -7,9 +7,10 @@
 library(ggplot2)
 library(lubridate)
 library(mgcv)
-library(dplR) # tree ring package I like to use to explore detrending sometimes
+# library(dplR) # tree ring package I like to use to explore detrending sometimes
 # Setting the file paths. This may be different for your computer.
-Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+# Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
+Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
 month.breaks <- data.frame(doy = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
@@ -24,7 +25,7 @@ head(ndvi.all)
 
 # wanting to see how many missing dates we actually have throughout the year- this can affect the VCI calculation.
 # creating a continuous timeline of dates
-time.all <- data.frame(date = seq(ymd('2001-01-05'), ymd("2023-08-16"), by="1 day"))
+time.all <- data.frame(date = seq(ymd('2001-01-05'), ymd(max(ndvi.all$date)), by="1 day"))
 time.all$doy <- yday(time.all$date)
 time.all$year <- year(time.all$date)
 summary(time.all)
@@ -59,12 +60,12 @@ ggplot(data=ndvi.all) + facet_wrap(type~.)+
 
 
 # seeing if we can correct for differences among satellites with referencing to lansat 8
-ls8.dat <- ndvi.all[ndvi.all$satellite=="Landsat8",]
-ls9.dat <- ndvi.all[ndvi.all$satellite=="Landsat9",]
+ls8.dat <- ndvi.all[ndvi.all$satellite=="landsat 8",]
+ls9.dat <- ndvi.all[ndvi.all$satellite=="landsat 9",]
 
 
 ggplot() + facet_wrap(type~.)+ 
-  labs(title="Landsat8") +
+  labs(title="Landsat 8") +
   geom_line(data=ls8.dat, aes(x=doy, y=NDVI, col=as.factor(year)))
 
 
@@ -76,7 +77,7 @@ summary(ndvi.all)
 # Fancy detrending----
 
 
-ndvi.gamm.step1 <- gamm(NDVI ~ type + s(doy, k=12, by=type), random=list(satellite=~1), data=ndvi.all, na.rm=T)
+ndvi.gamm.step1 <- gamm(NDVI ~ type + s(doy, k=12, by=as.factor(type)), random=list(satellite=~1), data=ndvi.all, na.rm=T)
 
 summary(ndvi.gamm.step1)
 ndvi.gamm.step1
