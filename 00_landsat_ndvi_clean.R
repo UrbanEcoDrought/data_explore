@@ -46,7 +46,7 @@ ndviAll$year <- lubridate::year(ndviAll$date)
 ndviAll$doy <- lubridate::yday(ndviAll$date)
 head(ndviAll)
 
-ggplot(data=ndviAll) + facet_wrap(type~.) +
+ggplot(data=ndviAll[ndviAll$date>"2023-01-01",]) + facet_wrap(type~.) +
   geom_point(aes(x=date, y=NDVI, col=satellite))
 
 saveRDS(ndviAll, file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))

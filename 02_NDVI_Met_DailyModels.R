@@ -23,6 +23,7 @@ pathSave <- file.path(google.drive, "data/r_files/processed_files")
 ndvi.all <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_ndvi_all.RDS"))
 head(ndvi.all)
 summary(ndvi.all)
+summary(ndvi.all[ndvi.all$year==2023,])
 
 
 # reading in Trent's SPI
@@ -388,13 +389,15 @@ for(LC in unique(ndviMet$type)){
   # This could be made more efficient 
   for(DAY in unique(datLC$doy)){
     if(DAY == 366) next # Skip leap day
+    rowNowBase <- which(datLC$doy==DAY)
     rowNow <- which(datLC$doy==DAY & !is.na(datLC$X30d.SPI) & !is.na(datLC$TMIN14d) & !is.na(datLC$NDVI.Lag14d))
     
-    if(length(rowNow)==0) next # Skip this row if we don't have the predictors we need
+    if(length(rowNowBase)==0) next # Skip this row if we don't have the predictors we need
+    datLC$NDVI.predNorm[rowNowBase] <- predict(modsNorm[[DAY]], newdata=datLC[rowNowBase,])
     
+    if(length(rowNow)==0) next # Skip this row if we don't have the predictors we need
     datLC$NDVI.pred[rowNow] <- predict(modsList[[DAY]], newdata=datLC[rowNow,])
     datLC$NDVI.predLag[rowNow] <- predict(modsLag[[DAY]], newdata=datLC[rowNow,])
-    datLC$NDVI.predNorm[rowNow] <- predict(modsNorm[[DAY]], newdata=datLC[rowNow,])
     datLC$NDVI.predTemp[rowNow] <- predict(modsTemp[[DAY]], newdata=datLC[rowNow,])
     datLC$NDVI.predMoist[rowNow] <- predict(modsMoist[[DAY]], newdata=datLC[rowNow,])
     datLC$NDVI.predCombo[rowNow] <- predict(modsCombo[[DAY]], newdata=datLC[rowNow,])
