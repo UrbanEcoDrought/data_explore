@@ -60,7 +60,7 @@ for(LC in unique(ndviMet$type)){
   
   # Checking the autocorrelation in NDVI
   head(datLC)
-  acf(datLC$NDVI[!is.na(datLC$NDVI)])
+  # acf(datLC$NDVI[!is.na(datLC$NDVI)])
   # acf(datLC$resid[!is.na(datLC$resid)]) # note: need to run below for this to work!
   
   
@@ -78,7 +78,7 @@ for(LC in unique(ndviMet$type)){
   summary(datLC)
   
   # ggplot(data=datLC[datLC$year==2020,]) +
-    # ggtitle(paste0(LC, "; Year = 2012")) +
+  # ggtitle(paste0(LC, "; Year = 2020")) +
   #   # geom_line(aes(group=year, color=satellite), linewidth=0.5)  +
   #   geom_line(aes(x=doy, y=NDVI, group=satellite), color="black") +
   #   geom_line(aes(x=doy, y=NDVI.Lag14d), color="gray50")
@@ -157,9 +157,10 @@ for(LC in unique(ndviMet$type)){
     #Set up a normal (intercept-only) model
     modN <- nlme::lme(NDVI ~ 1, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
     modsNorm[[i]] <- modN
+    summary(modN)
     
     #Set up a lag-only model
-    modL <- nlme::lme(NDVI ~NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
+    modL <- nlme::lme(NDVI ~ NDVI.Lag14d, random=list(satellite=~1), data=dat.tmp[,], na.action=na.omit)
     modsLag[[i]] <- modL
     
     # This is running a pretty basic model --> TMIN30d shouldn't have a big impact in the summer, but we'll keep it to see what happens
