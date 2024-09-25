@@ -2,6 +2,7 @@ library(mgcv)
 library(ggplot2)
 library(tibble)
 library(dplyr)
+library(MASS)
 
 # Sys.setenv(GOOGLE_DRIVE = "G:/Shared drives/Urban Ecological Drought")
 Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
@@ -33,32 +34,101 @@ nObs <- nrow(ndvi.2024.grass) # If we want to pick the number of knots based our
 gam_2024 <- gam(NDVI ~ s(yday, k=nmonths*2), data=ndvi.2024.grass[,]) #create simple gam using the day of the year and NDVI
 gam.check(gam_2024) #check accuracy of model
 summary(gam_2024)
-
 plot(gam_2024, residuals=TRUE)
 
-newDF <- data.frame(yday=seq(1,max(ndvi.2024.grass$yday))) #create new data frame with column to represent day of year sequence
-ndata <- add_column(newDF, fit=predict(gam_2024, newdata=newDF,type='response')) #make continuous time series using predict
-summary(ndata)
-ggplot(ndata,aes(x=yday,y=fit)) + geom_line() + #quick plot to see fitted data
-  geom_point(data=ndvi.2024, aes(y=NDVI, x=yday), color="blue2") # adding our observed data
+set.seed(1124)
+m.terms <- attr(terms(gam_2024), "term.labels") #model terms
 
-first.diff <- diff(ndata$fit) #calculate slopes using first differenes approach + plot
-diff_data <- as_tibble(first.diff)
-diff_data <- add_column(diff_data,time_step=seq(1,(max(ndvi.2024.grass$yday)-1)))
-ggplot(diff_data, aes(time_step, value)) +geom_line() + geom_hline(yintercept=0, color='blue')+
-  labs(x="∆x", y="∆y") + ylim(-0.006,0.006)
+alpha = 0.05 #95% CI
+lwr=alpha/2
+upr = 1-alpha/2
+
+
+df.model <- model.frame(gam_2024) #finding which columns are numeric
+cols.num <- vector()
+for(j in 1:ncol(df.model)){
+  if(is.numeric(df.model[,j])) cols.num <- c(cols.num, names(df.model)[j])
+}
+
+# Generate a random distribution of betas using the covariance matrix
+coef.gam <- coef(gam_2024)
+Rbeta <- mvrnorm(n=100, gam_2024$coefficients, gam_2024$Vp)
+
+newDF <- data.frame(yday=seq(1,max(ndvi.2024.grass$yday))) #create new data frame with column to represent day of year sequence
+X0 <- predict(gam_2024, newdata=newDF,type='lpmatrix') #create prediction matrices
+newD <- newDF
+newD[,m.terms[m.terms %in% cols.num]] <- newDF[,m.terms[m.terms %in% cols.num]]+1e-7
+X1 <- predict(gam_2024, newdata=newD, type="lpmatrix")
+Xp <- (X1 - X0) / 1e-7 # Change in Y per unit X
+Xp.r <- NROW(Xp)
+Xp.c <- NCOL(Xp)
+
+for(v in newDF$yday) {
+  Xi <- Xp * 0 # zeroing out our data frame 
+  want <- which(substr(names(coef.gam),1,(nchar(v)+3))==paste0("s(",v,")")) # Finding which columns belong to this factor
+  Xi[, want] <- Xp[, want]
+  df <- Xi %*% coef(gam_2024)
+  
+  # Generating a distribution of simulated derivatives
+  sim.tmp <- data.frame(Xp[,want] %*% t(Rbeta[,want]) )
+  sim.mean <- apply(sim.tmp, 1, mean)
+  sim.lwr <- apply(sim.tmp, 1, quantile, lwr)
+  sim.upr <- apply(sim.tmp, 1, quantile, upr)
+  sig <- as.factor(ifelse(sim.lwr*sim.upr>0, "*", NA))
+  
+  df.tmp <- data.frame(newDF, 
+                       mean=sim.mean,
+                       lwr=sim.lwr,
+                       upr=sim.upr,
+                       sig=sig,
+                       var=as.factor(v))
+  
+  sim.tmp$var <- as.factor(v)
+  
+  if(v == newDF$yday[1]){ 
+    df.out <- df.tmp 
+    df.sim <- sim.tmp
+  } else {
+    df.out <- rbind(df.out, df.tmp)
+    df.sim <- rbind(df.sim, sim.tmp)
+  }
+  
+}
+if(return.sims==T){
+  out <- list()
+  out[["ci"]]   <- df.out
+  out[["sims"]] <- df.sim
+} else {
+  out <- df.out
+}
+
+
+
+
+
+
+#ndata <- add_column(newDF, fit=predict(gam_2024, newdata=newDF,type='response')) #make continuous time series using predict
+#summary(ndata)
+#ggplot(ndata,aes(x=yday,y=fit)) + geom_line() + #quick plot to see fitted data
+ # geom_point(data=ndvi.2024, aes(y=NDVI, x=yday), color="blue2") # adding our observed data
+
+#first.diff <- diff(ndata$fit) #calculate slopes using first differenes approach + plot
+#diff_data <- as_tibble(first.diff)
+#diff_data <- add_column(diff_data,time_step=seq(1,(max(ndvi.2024.grass$yday)-1)))
+#ggplot(diff_data, aes(time_step, value)) +geom_line() + geom_hline(yintercept=0, color='blue')+
+ # labs(x="∆x", y="∆y") + ylim(-0.006,0.006)
 
 #GAM CI
-fam <- family(gam_2024) #use family argument to calculate CIs
-fam
+#fam <- family(gam_2024) #use family argument to calculate CIs
+#fam
 
-ilink <- fam$linkinv #extract inverse of link function
-ilink
+#ilink <- fam$linkinv #extract inverse of link function
+#ilink
 
-ndata <- bind_cols(ndata, setNames(as_tibble(predict(gam_2024, ndata, se.fit=TRUE)[1:2]),c('fit_link','se_link'))) #generate fitted values & errors on link scale
-ndata <- mutate(ndata, fit_resp = ilink(fit_link),right_upr = ilink(fit_link + (2 * se_link)), right_lwr = ilink(fit_link - (2 * se_link))) #compute 95% CI using above values and backtransform to response scale using ilink
-summary(ndata)
+#ndata <- bind_cols(ndata, setNames(as_tibble(predict(gam_2024, ndata, se.fit=TRUE)[1:2]),c('fit_link','se_link'))) #generate fitted values & errors on link scale
+#ndata <- mutate(ndata, fit_resp = ilink(fit_link),right_upr = ilink(fit_link + (2 * se_link)), right_lwr = ilink(fit_link - (2 * se_link))) #compute 95% CI using above values and backtransform to response scale using ilink
+#summary(ndata)
 
-ggplot(ndata,aes(x=yday,y=fit)) + geom_line() + 
-  geom_point(data=ndvi.2024.grass, aes(y=NDVI, x=yday), color="blue2") +
-  geom_ribbon(data=ndata, aes(ymin=right_lwr, ymax=right_upr),alpha=0.1) #plot fitted values with 95% CI
+#ggplot(ndata,aes(x=yday,y=fit)) + geom_line() + 
+  #geom_point(data=ndvi.2024.grass, aes(y=NDVI, x=yday), color="blue2") +
+  #geom_ribbon(data=ndata, aes(ymin=right_lwr, ymax=right_upr),alpha=0.1) #plot fitted values with 95% CI
