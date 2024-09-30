@@ -8,6 +8,12 @@ library(MASS)
 Sys.setenv(GOOGLE_DRIVE = "~/Google Drive/Shared drives/Urban Ecological Drought")
 google.drive <- Sys.getenv("GOOGLE_DRIVE")
 
+######################
+#read in gam derivs function
+######################
+source("~/work/MSB_Non-Stationarity/Example_Temporal_TreeRings/scripts/helper_functions/0_Calculate_GAMM_Derivs.R")
+######################
+
 ndvi.latest <- read.csv(file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract/NDVIall_latest.csv")) #load latest NDVI data
 ndvi.latest$date <- as.Date(ndvi.latest$date)
 ndvi.latest$type <- as.factor(ndvi.latest$type)
@@ -36,109 +42,45 @@ gam.check(gam_2023) #check accuracy of model
 summary(gam_2023)
 plot(gam_2023, residuals=TRUE)
 
-set.seed(1124)
-m.terms <- attr(terms(gam_2023), "term.labels") #model terms
-
-alpha = 0.05 #95% CI
-lwr=alpha/2
-upr = 1-alpha/2
-
-
-df.model <- model.frame(gam_2023) #finding which columns are numeric
-cols.num <- vector()
-for(j in 1:ncol(df.model)){
-  if(is.numeric(df.model[,j])) cols.num <- c(cols.num, names(df.model)[j])
-}
-
-# Generate a random distribution of betas using the covariance matrix
-coef.gam <- coef(gam_2023)
-Rbeta <- mvrnorm(n=100, gam_2023$coefficients, gam_2023$Vp)
-
 newDF <- data.frame(yday=seq(1,max(ndvi.2023.forest$yday))) #create new data frame with column to represent day of year sequence
-X0 <- predict(gam_2023, newdata=newDF,type='lpmatrix') #create prediction matrices
-
-newD <- newDF
-newD[,m.terms[m.terms %in% cols.num]] <- newDF[,m.terms[m.terms %in% cols.num]]+1e-7
-X1 <- predict(gam_2023, newdata=newD, type="lpmatrix")
-Xp <- (X1 - X0) / 1e-7 # Change in Y per unit X
-Xp.r <- NROW(Xp)
-Xp.c <- NCOL(Xp)
-
-for(v in names(newDF)) {
-  Xi <- Xp * 0 # zeroing out our data frame 
-  want <- which(substr(names(coef.gam),1,(nchar(v)+3))==paste0("s(",v,")")) # Finding which columns belong to this factor
-  Xi[, want] <- Xp[, want]
-  df <- Xi %*% coef(gam_2023)
-  
-  # Generating a distribution of simulated derivatives
-  sim.tmp <- data.frame(Xp[,want] %*% t(Rbeta[,want]) )
-  sim.mean <- apply(sim.tmp, 1, mean)
-  sim.lwr <- apply(sim.tmp, 1, quantile, lwr)
-  sim.upr <- apply(sim.tmp, 1, quantile, upr)
-  sig <- as.factor(ifelse(sim.lwr*sim.upr>0, "*", NA))
-  
-  df.tmp <- data.frame(newDF, 
-                       mean=sim.mean,
-                       lwr=sim.lwr,
-                       upr=sim.upr,
-                       sig=sig,
-                       var=as.factor(v))
-  
-  sim.tmp$var <- as.factor(v)
-  
-  if(v == newDF$yday[1]){ 
-    df.out <- df.tmp 
-    df.sim <- sim.tmp
-  } else {
-    df.out <- rbind(df.out, df.tmp)
-    df.sim <- rbind(df.sim, sim.tmp)
-  }
-  
-}
-if(return.sims==T){
-  out <- list()
-  out[["ci"]]   <- df.out
-  out[["sims"]] <- df.sim
-} else {
-  out <- df.out
-}
-
-simLong <- stack(sim.tmp)
-simLong$yday <- df.tmp$yday
-summary(simLong)
-
-ggplot(data=simLong) +
-  geom_line(aes(x=yday, y=values, group=ind), linewidth=0.1)
-
-ggplot(data=df.tmp) +
-  geom_line(data=simLong, aes(x=yday, y=values, group=ind), linewidth=0.1, color="gray60") +
-  geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
-  geom_line(aes(x=yday, y=mean), color="black", linewdith=0.75) +
-  geom_point(data=df.tmp[df.tmp$sig=="*",], aes(x=yday, y=mean), color="red2") +
-  geom_hline(yintercept=0)
-
-# adding the mean prediciton of NDVI
-df.tmp$NDVI.pred <- predict(gam_2023, newdata=df.tmp)
-# summary(df.tmp)
-
-ggplot(data=df.tmp) +
-  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
-  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
-  geom_point(data=df.tmp[df.tmp$sig=="*" & df.tmp$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
-  geom_point(data=df.tmp[df.tmp$sig=="*" & df.tmp$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
-  geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 8",], aes(x=yday,y=NDVI), color="blue")+
-  geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 9",], aes(x=yday,y=NDVI), color="red")+
-  labs(title="2023 Forest", )
-
-ggplot(data=df.tmp) +
-  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
-  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
-  geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 8",], aes(x=yday,y=NDVI, color="Landsat 8"))+
-  geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 9",], aes(x=yday,y=NDVI, color="Landsat 9"))+
-  labs(title="2023 Forest",color="Legend") + ylab("NDVI") + scale_color_manual(" ", breaks=c("Landsat 8", "Landsat 9"), values = c("Landsat 8"="red","Landsat 9"="blue"))
 
 derivs <- calc.derivs(gam_2023, newdata = newDF, vars=names(newDF))
 derivs$NDVI.pred <- predict(gam_2023, newdata=derivs)
+
+#simLong <- stack(sim.tmp)
+#simLong$yday <- df.tmp$yday
+#summary(simLong)
+
+#ggplot(data=simLong) +
+ # geom_line(aes(x=yday, y=values, group=ind), linewidth=0.1)
+
+#ggplot(data=df.tmp) +
+  #geom_line(data=simLong, aes(x=yday, y=values, group=ind), linewidth=0.1, color="gray60") +
+  #geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  #geom_line(aes(x=yday, y=mean), color="black", linewdith=0.75) +
+  #geom_point(data=df.tmp[df.tmp$sig=="*",], aes(x=yday, y=mean), color="red2") +
+  #geom_hline(yintercept=0)
+
+# adding the mean prediciton of NDVI
+#df.tmp$NDVI.pred <- predict(gam_2023, newdata=df.tmp)
+# summary(df.tmp)
+
+#ggplot(data=df.tmp) +
+  #geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  #geom_point(data=df.tmp[df.tmp$sig=="*" & df.tmp$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
+  #geom_point(data=df.tmp[df.tmp$sig=="*" & df.tmp$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
+  #geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 8",], aes(x=yday,y=NDVI), color="blue")+
+  #geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 9",], aes(x=yday,y=NDVI), color="red")+
+  #labs(title="2023 Forest", )
+
+#ggplot(data=df.tmp) +
+  #geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  #geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 8",], aes(x=yday,y=NDVI, color="Landsat 8"))+
+  #geom_point(data=ndvi.2023.forest[ndvi.2023.forest$mission=="landsat 9",], aes(x=yday,y=NDVI, color="Landsat 9"))+
+  #labs(title="2023 Forest",color="Legend") + ylab("NDVI") + scale_color_manual(" ", breaks=c("Landsat 8", "Landsat 9"), values = c("Landsat 8"="red","Landsat 9"="blue"))
+
 
 #################
 # Forest 2012
@@ -178,6 +120,45 @@ ggplot(data=derivs) +
   geom_point(data=derivs[derivs$sig=="*" & derivs$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
   labs(title="2012 Forest CI")
 
+
+#################
+#2012
+#################
+ndvi.2012 <- ndvi.latest[ndvi.latest$year==2012,] #subset data to only contain specific year
+dim(ndvi.2012)
+summary(as.factor(ndvi.2012$mission))
+
+ndvi.2012 <- ndvi.2012[ndvi.2012$type=='crop',] #replace with LC type
+
+ggplot(data=ndvi.2012[,], aes(x=yday,y=NDVI)) + geom_point() #quick plot to visualize
+
+nmonths <- length(unique(lubridate::month(ndvi.2012$date))) # Number of knots per month
+nObs <- nrow(ndvi.2012) # If we want to pick the number of knots based our the number of obs
+gam_2012 <- gam(NDVI ~ s(yday, k=nmonths*2), data=ndvi.2012[,]) #create simple gam using the day of the year and NDVI
+gam.check(gam_2012) #check accuracy of model
+summary(gam_2012)
+plot(gam_2012, residuals=TRUE)
+
+newDF <- data.frame(yday=seq(1,max(ndvi.2012$yday))) #create new data frame with column to represent day of year sequence
+derivs <- calc.derivs(gam_2012, newdata = newDF, vars=names(newDF))
+derivs$NDVI.pred <- predict(gam_2012, newdata=derivs)
+
+png("~/Google Drive/Shared drives/Urban Ecological Drought/data/r_files/figures/inital-gams-test figures/crop_2005.png", height=8, width=11, units="in", res=320)
+ggplot(data=derivs) +
+  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  geom_point(data=ndvi.2012[ndvi.2012$mission=="landsat 7",], aes(x=yday,y=NDVI, color="Landsat 7"))+
+  #geom_point(data=ndvi.2005.crop[ndvi.2005.crop$mission=="landsat 7",], aes(x=yday,y=NDVI, color="Landsat 7"))+
+  labs(title="2012 crop",color="Legend") + ylab("NDVI") + scale_color_manual(" ", breaks=c("Landsat 7"), values = c("Landsat 7"="purple"))
+dev.off()
+
+ggplot(data=derivs) +
+  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  #geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  geom_point(data=derivs[derivs$sig=="*" & derivs$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
+  geom_point(data=derivs[derivs$sig=="*" & derivs$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
+  labs(title="2012 crop CI")
+
 #################
 # Forest 2005
 #################
@@ -215,6 +196,44 @@ ggplot(data=derivs) +
   geom_point(data=derivs[derivs$sig=="*" & derivs$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
   geom_point(data=derivs[derivs$sig=="*" & derivs$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
   labs(title="2005 Forest CI")
+
+################
+# 2005
+#################
+ndvi.2005 <- ndvi.latest[ndvi.latest$year==2005,] #subset data to only contain specific year
+dim(ndvi.2005)
+
+ndvi.2005 <- ndvi.2005[ndvi.2005$type=='crop',]
+summary(as.factor(ndvi.2005$mission))
+
+ggplot(data=ndvi.2005[,], aes(x=yday,y=NDVI)) + geom_point()
+
+nmonths <- length(unique(lubridate::month(ndvi.2005$date))) # Number of knots per month
+nObs <- nrow(ndvi.2005) # If we want to pick the number of knots based our the number of obs
+gam_2005c <- gam(NDVI ~ s(yday, k=nmonths*2), data=ndvi.2005[,]) #create simple gam using the day of the year and NDVI
+gam.check(gam_2005c) #check accuracy of model
+summary(gam_2005c)
+plot(gam_2005c, residuals=TRUE)
+
+newDF <- data.frame(yday=seq(1,max(ndvi.2005$yday))) #create new data frame with column to represent day of year sequence
+derivs <- calc.derivs(gam_2005c, newdata = newDF, vars=names(newDF))
+derivs$NDVI.pred <- predict(gam_2005c, newdata=derivs)
+
+png("~/Google Drive/Shared drives/Urban Ecological Drought/data/r_files/figures/inital-gams-test figures/crop_2005.png", height=8, width=11, units="in", res=320)
+ggplot(data=derivs) +
+  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  #geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  geom_point(data=ndvi.2005[ndvi.2005$mission=="landsat 5",], aes(x=yday,y=NDVI, color="Landsat 5"))+
+  geom_point(data=ndvi.2005[ndvi.2005$mission=="landsat 7",], aes(x=yday,y=NDVI, color="Landsat 7"))+
+  labs(title="2005 urban-open",color="Legend") + ylab("NDVI") + scale_color_manual(" ", breaks=c("Landsat 5", "Landsat 7"), values = c("Landsat 5"="green","Landsat 7"="purple"))
+dev.off()
+
+ggplot(data=derivs) +
+  geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+  geom_point(data=derivs[derivs$sig=="*" & derivs$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
+  geom_point(data=derivs[derivs$sig=="*" & derivs$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
+  labs(title="2005 crop CI")
 
 #ndata <- add_column(newDF, fit=predict(gam_2023, newdata=newDF,type='response')) #make continuous time series using predict
 #summary(ndata)
