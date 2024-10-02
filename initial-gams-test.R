@@ -25,8 +25,10 @@ summary(ndvi.latest)
 ######################
 ndviUrbMed <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="urban-medium",]
 ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI, color=mission)) + 
-  geom_point(size=0.5, alpha=0.5) +
-  geom_smooth(method="gam") #quick plot to visualize
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) 
 
 gamUrbMed <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbMed)
 summary(gamUrbMed)
@@ -51,20 +53,27 @@ ndviUrbMed$NDVI.reproj <- ndviUrbMed$resid + ndviUrbMed$predMean.reproj
 summary(ndviUrbMed)
 
 ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI.reproj, color=mission)) + 
-  geom_point(size=0.5, alpha=0.5) +
-  geom_smooth(method="gam") #quick plot to visualize
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) 
 
 ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI)) + 
   ggtitle("raw ndvi") +
   geom_point(size=0.1, alpha=0.5, color="gray50") +
-  geom_smooth(method="gam", color="black", fill="black") +
-  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year)))
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) 
+  
 
 ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI.reproj)) + 
   ggtitle("reprojected ndvi") +
   geom_point(size=0.1, alpha=0.5, color="gray50") +
-  geom_smooth(method="gam", color="black", fill="black") +
-  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year)))
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) 
 
 ######################
 
