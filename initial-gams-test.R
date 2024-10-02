@@ -12,6 +12,8 @@ google.drive <- Sys.getenv("GOOGLE_DRIVE")
 #read in gam derivs function
 ######################
 source("~/work/MSB_Non-Stationarity/Example_Temporal_TreeRings/scripts/helper_functions/0_Calculate_GAMM_Derivs.R")
+source("../../MSB_Non-Stationarity/Example_Temporal_TreeRings/scripts/helper_functions/0_Calculate_GAMM_Derivs.R")
+# dir("../..")
 ######################
 
 ndvi.latest <- read.csv(file.path(google.drive, "data/UrbanEcoDrought_NDVI_LocalExtract/NDVIall_latest.csv")) #load latest NDVI data
@@ -21,19 +23,93 @@ ndvi.latest$mission <- as.factor(ndvi.latest$mission)
 summary(ndvi.latest)
 
 ######################
+ndviUrbMed <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="urban-medium",]
+ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI, color=mission)) + 
+  geom_point(size=0.5, alpha=0.5) +
+  geom_smooth(method="gam") #quick plot to visualize
+
+gamUrbMed <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbMed)
+summary(gamUrbMed)
+par(mfrow=c(2,2))
+plot(gamUrbMed)
+par(mfrow=c(1,1))
+
+
+ndviUrbMed$predMean <- predict(gamUrbMed, newdata=ndviUrbMed)
+ndviUrbMed$resid <- ndviUrbMed$NDVI - ndviUrbMed$predMean
+head(ndviUrbMed)
+tail(ndviUrbMed)
+
+# Going to "reproject" the predicted mean/normal
+ndviUrbMedDupe <- ndviUrbMed
+ndviUrbMedDupe$mission <- "landsat 8"
+head(ndviUrbMedDupe)
+tail(ndviUrbMedDupe)
+
+ndviUrbMed$predMean.reproj <- predict(gamUrbMed, newdata=ndviUrbMedDupe)
+ndviUrbMed$NDVI.reproj <- ndviUrbMed$resid + ndviUrbMed$predMean.reproj
+summary(ndviUrbMed)
+
+ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI.reproj, color=mission)) + 
+  geom_point(size=0.5, alpha=0.5) +
+  geom_smooth(method="gam") #quick plot to visualize
+
+ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI)) + 
+  ggtitle("raw ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", color="black", fill="black") +
+  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year)))
+
+ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI.reproj)) + 
+  ggtitle("reprojected ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", color="black", fill="black") +
+  geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year)))
+
+######################
+
+
+
+######################
 #fitting gams using by=mission, 2005
 ######################
 ndvi.2005 <- ndvi.latest[ndvi.latest$year==2005,] #subset data to only contain specific year
 dim(ndvi.2005)
 summary(as.factor(ndvi.2005$mission))
 
-ndvi.2005 <- ndvi.2005[ndvi.2005$type=='urban-open',] #replace with LC type
+ggplot(data=ndvi.2005[,], aes(x=yday,y=NDVI, color=type)) + geom_point() #quick plot to visualize
 
-ggplot(data=ndvi.2005[,], aes(x=yday,y=NDVI)) + geom_point() #quick plot to visualize
+gam_2005stupid <- gam(NDVI ~ s(yday, k=nmonths*2) , data=ndvi.2005[,]) #create simple 
+plot(gam_2005stupid)
+summary(gam_2005stupid)
+
+gam_2005Alls <- gam(NDVI ~ s(yday, k=nmonths*2, by=type), data=ndvi.2005[,]) #create simple 
+summary(gam_2005Alls)
+plot(gam_2005Alls)
+
+ndvi.2005$pred1 <- predict(gam_2005Alls, newdata=ndvi.2005)
+ndvi.2005$res1 <- ndvi.2005$NDVI-ndvi.2005$pred1
+summary(ndvi.2005)
+
+gam_2005All <- gam(NDVI ~ s(yday, k=nmonths*2, by=type) + type, data=ndvi.2005[,]) #create simple 
+summary(gam_2005All)
+plot(gam_2005All)
+
+ndvi.2005$pred2 <- predict(gam_2005All, newdata=ndvi.2005)
+ndvi.2005$res2 <- ndvi.2005$NDVI-ndvi.2005$pred2
+summary(ndvi.2005)
+
+ggplot(data=ndvi.2005[,], aes(x=NDVI,y=pred1, color=type)) + geom_point() + geom_abline(slope =1, intercept = 0) #quick plot to visualize
+ggplot(data=ndvi.2005[,], aes(x=NDVI,y=pred2, color=type)) + geom_point() + geom_abline(slope =1, intercept = 0)  #quick plot to visualize
+
+
+ndvi.2005Open <- ndvi.2005[ndvi.2005$type=='urban-open',] #replace with LC type
+
+ggplot(data=ndvi.2005Open[,], aes(x=yday,y=NDVI, color=mission)) + geom_point() #quick plot to visualize
 
 nmonths <- length(unique(lubridate::month(ndvi.2005$date))) # Number of knots per month
 nObs <- nrow(ndvi.2005) # If we want to pick the number of knots based our the number of obs
-gam_2005 <- gam(NDVI ~ s(yday, k=nmonths*2, by=mission), data=ndvi.2005[,]) #create simple gam using the day of the year and NDVI
+gam_2005 <- gam(NDVI ~ s(yday, k=nmonths*2, by=mission) + mission, data=ndvi.2005[,]) #create simple gam using the day of the year and NDVI
 gam.check(gam_2005) #check accuracy of model
 summary(gam_2005)$r.sq # R-squared
 summary(gam_2005)$dev.expl # explained deviance
