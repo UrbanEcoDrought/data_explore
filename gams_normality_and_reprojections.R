@@ -23,9 +23,48 @@ ndvi.latest$mission <- as.factor(ndvi.latest$mission)
 summary(ndvi.latest)
 
 ######################
+#plotting satellite data after Landsat 9 is launched
+ndvi.recent <- ndvi.latest[ndvi.latest$date > "2022-01-01",]
+
+#ndvi.recent_crop <- ndvi.recent[ndvi.recent$type=="crop",]
+#ndvi.recent_forest <- ndvi.recent[ndvi.recent$type=="forest",]
+#ndvi.recent_grass <- ndvi.recent[ndvi.recent$type=="grassland",]
+#ndvi.recent_urbhigh <- ndvi.recent[ndvi.recent$type=="urban-high",]
+#ndvi.recent_urbmed <- ndvi.recent[ndvi.recent$type=="urban-medium",]
+#ndvi.recent_urblow <- ndvi.recent[ndvi.recent$type=="urban-low",]
+#ndvi.recent_urbop <- ndvi.recent[ndvi.recent$type=="urban-open",]
+
+
+ggplot(data=ndvi.recent[,], aes(x=date, y=NDVI)) +
+  ggtitle("NDVI by Mission 2022-present") +
+  facet_wrap(~type) +
+  geom_line(data=ndvi.recent[ndvi.recent$mission=="landsat 7", ], aes(color="landsat 7"), size=0.25) +
+  geom_line(data=ndvi.recent[ndvi.recent$mission=="landsat 8", ], aes(color="landsat 8"), size=0.25) +
+  geom_line(data=ndvi.recent[ndvi.recent$mission=="landsat 9", ], aes(color="landsat 9"), size=0.25) +
+  stat_smooth(data=ndvi.recent[ndvi.recent$mission=="landsat 7", ], aes(color="landsat 7", fill="landsat 7"), size=1.25, alpha=0.2, method="gam") +
+  stat_smooth(data=ndvi.recent[ndvi.recent$mission=="landsat 8", ], aes(color="landsat 8", fill="landsat 8"), size=1.25, alpha=0.2, method="gam") +
+  stat_smooth(data=ndvi.recent[ndvi.recent$mission=="landsat 9", ], aes(color="landsat 9", fill="landsat 9"), size=1.25, alpha=0.2, method="gam") +
+  #scale_x_continuous(name="Date", expand=c(0,0), breaks=day.labels$date[seq(2, 12, by=3)], labels=day.labels$Text[seq(2, 12, by=3)])  +
+  scale_color_manual(values=c("landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  coord_cartesian(ylim=c(0,1)) +
+  labs(x="Date", col="mission")  +
+  guides(fill=F) +
+  theme_bw()
+
+#ggplot(data=ndvi.recent[,], aes(x=date,y=NDVI, color=mission)) +
+  #facet_wrap(~type) +
+  #geom_point(size=0.1, alpha=0.3) +
+  #geom_smooth(method="gam") +
+  #scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  #scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  #labs(title="NDVI by mission")
+
+
+######################
 #crop
 ######################
-ndvicrop <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="crop",]
+ndvicrop <- ndvi.latest[ndvi.latest$type=="crop",]
 ggplot(data=ndvicrop[,], aes(x=yday,y=NDVI, color=mission)) + 
   geom_point(size=0.1, alpha=0.3) +
   geom_smooth(method="gam") +
@@ -85,7 +124,7 @@ ggplot(data=ndvicrop[,], aes(x=yday,y=NDVI.reproj)) +
 ######################
 #forest
 ######################
-ndviforest <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="forest",]
+ndviforest <- ndvi.latest[ndvi.latest$type=="forest",]
 ggplot(data=ndviforest[,], aes(x=yday,y=NDVI, color=mission)) + 
   geom_point(size=0.1, alpha=0.3) +
   geom_smooth(method="gam") +
@@ -145,7 +184,7 @@ ggplot(data=ndviforest[,], aes(x=yday,y=NDVI.reproj)) +
 ######################
 #grassland
 ######################
-ndvigrass <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="grassland",]
+ndvigrass <- ndvi.latest[ndvi.latest$type=="grassland",]
 ggplot(data=ndvigrass[,], aes(x=yday,y=NDVI, color=mission)) + 
   geom_point(size=0.1, alpha=0.3) +
   geom_smooth(method="gam") +
@@ -206,24 +245,24 @@ ggplot(data=ndvigrass[,], aes(x=yday,y=NDVI.reproj)) +
 #urban-high
 ######################
 
-ndviUrbHigh <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="urban-high",]
+ndviUrbHigh <- ndvi.latest[ndvi.latest$type=="urban-high",]
 ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI, color=mission)) + 
   geom_point(size=0.1, alpha=0.3) +
   geom_smooth(method="gam") +
   scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
   scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
-  labs(title="grassland")
+  labs(title="urban-high")
 
-gamgrass <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbHigh)
-summary(gamgrass)
-AIC(gamgrass)
+gamUrbHigh <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbHigh)
+summary(gamUrbHigh)
+AIC(gamUrbHigh)
 
 par(mfrow=c(2,2))
-plot(gamgrass)
+plot(gamUrbHigh)
 par(mfrow=c(1,1))
 
 
-ndviUrbHigh$predMean <- predict(gamgrass, newdata=ndviUrbHigh)
+ndviUrbHigh$predMean <- predict(gamUrbHigh, newdata=ndviUrbHigh)
 ndviUrbHigh$resid <- ndviUrbHigh$NDVI - ndviUrbHigh$predMean
 head(ndviUrbHigh)
 tail(ndviUrbHigh)
@@ -234,7 +273,7 @@ ndviUrbHighDupe$mission <- "landsat 8"
 head(ndviUrbHighDupe)
 tail(ndviUrbHighDupe)
 
-ndviUrbHigh$predMean.reproj <- predict(gamgrass, newdata=ndviUrbHighDupe)
+ndviUrbHigh$predMean.reproj <- predict(gamUrbHigh, newdata=ndviUrbHighDupe)
 ndviUrbHigh$NDVI.reproj <- ndviUrbHigh$resid + ndviUrbHigh$predMean.reproj
 summary(ndviUrbHigh)
 
@@ -243,10 +282,10 @@ ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI.reproj, color=mission)) +
   geom_smooth(method="gam") +
   scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
   scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
-  labs(title="grassland reprojected") + ylab("Reprojected NDVI")
+  labs(title="urban-high reprojected") + ylab("Reprojected NDVI")
 
 ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI)) + 
-  ggtitle("grassland raw ndvi") +
+  ggtitle("urban-high raw ndvi") +
   geom_point(size=0.1, alpha=0.5, color="gray50") +
   geom_smooth(method="gam", aes(color="normal", fill="normal")) +
   geom_smooth(method="gam", data=ndviUrbHigh[ndviUrbHigh$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
@@ -255,7 +294,7 @@ ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI)) +
 
 
 ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI.reproj)) + 
-  ggtitle("grassland reprojected ndvi") +
+  ggtitle("urban-high reprojected ndvi") +
   geom_point(size=0.1, alpha=0.5, color="gray50") +
   geom_smooth(method="gam", aes(color="normal", fill="normal")) +
   geom_smooth(method="gam", data=ndviUrbHigh[ndviUrbHigh$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
@@ -269,7 +308,7 @@ ggplot(data=ndviUrbHigh[,], aes(x=yday,y=NDVI.reproj)) +
 #urban-medium
 ######################
 
-ndviUrbMed <- ndvi.latest <- ndvi.latest[ndvi.latest$type=="urban-medium",]
+ndviUrbMed <- ndvi.latest[ndvi.latest$type=="urban-medium",]
 ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI, color=mission)) + 
   geom_point(size=0.1, alpha=0.3) +
   geom_smooth(method="gam") +
@@ -322,6 +361,130 @@ ggplot(data=ndviUrbMed[,], aes(x=yday,y=NDVI.reproj)) +
   geom_point(size=0.1, alpha=0.5, color="gray50") +
   geom_smooth(method="gam", aes(color="normal", fill="normal")) +
   geom_smooth(method="gam", data=ndviUrbMed[ndviUrbMed$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  ylab("Reprojected NDVI")
+
+
+######################
+#urban-low
+######################
+
+ndviUrbLow <- ndvi.latest[ndvi.latest$type=="urban-low",]
+ggplot(data=ndviUrbLow[,], aes(x=yday,y=NDVI, color=mission)) + 
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  labs(title="urban-low")
+
+gamUrbLow <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbLow)
+summary(gamUrbLow)
+AIC(gamUrbLow)
+
+par(mfrow=c(2,2))
+plot(gamUrbLow)
+par(mfrow=c(1,1))
+
+
+ndviUrbLow$predMean <- predict(gamUrbLow, newdata=ndviUrbLow)
+ndviUrbLow$resid <- ndviUrbLow$NDVI - ndviUrbLow$predMean
+head(ndviUrbLow)
+tail(ndviUrbLow)
+
+# Going to "reproject" the predicted mean/normal
+ndviUrbLowDupe <- ndviUrbLow
+ndviUrbLowDupe$mission <- "landsat 8"
+head(ndviUrbLowDupe)
+tail(ndviUrbLowDupe)
+
+ndviUrbLow$predMean.reproj <- predict(gamUrbLow, newdata=ndviUrbLowDupe)
+ndviUrbLow$NDVI.reproj <- ndviUrbLow$resid + ndviUrbLow$predMean.reproj
+summary(ndviUrbLow)
+
+ggplot(data=ndviUrbLow[,], aes(x=yday,y=NDVI.reproj, color=mission)) + 
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  labs(title="urban-low reprojected") + ylab("Reprojected NDVI")
+
+ggplot(data=ndviUrbLow[,], aes(x=yday,y=NDVI)) + 
+  ggtitle("urban-low raw ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbLow[ndviUrbLow$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) 
+
+
+ggplot(data=ndviUrbLow[,], aes(x=yday,y=NDVI.reproj)) + 
+  ggtitle("urban-low reprojected ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbLow[ndviUrbLow$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  ylab("Reprojected NDVI")
+
+
+######################
+#urban-open
+######################
+
+ndviUrbOpen <- ndvi.latest[ndvi.latest$type=="urban-open",]
+ggplot(data=ndviUrbOpen[,], aes(x=yday,y=NDVI, color=mission)) + 
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  labs(title="urban-open")
+
+gamUrbOpen <- gam(NDVI ~ s(yday, k=18, by=mission) + mission-1, data=ndviUrbOpen)
+summary(gamUrbOpen)
+AIC(gamUrbOpen)
+
+par(mfrow=c(2,2))
+plot(gamUrbOpen)
+par(mfrow=c(1,1))
+
+
+ndviUrbOpen$predMean <- predict(gamUrbOpen, newdata=ndviUrbOpen)
+ndviUrbOpen$resid <- ndviUrbOpen$NDVI - ndviUrbOpen$predMean
+head(ndviUrbOpen)
+tail(ndviUrbOpen)
+
+# Going to "reproject" the predicted mean/normal
+ndviUrbOpenDupe <- ndviUrbOpen
+ndviUrbOpenDupe$mission <- "landsat 8"
+head(ndviUrbOpenDupe)
+tail(ndviUrbOpenDupe)
+
+ndviUrbOpen$predMean.reproj <- predict(gamUrbOpen, newdata=ndviUrbOpenDupe)
+ndviUrbOpen$NDVI.reproj <- ndviUrbOpen$resid + ndviUrbOpen$predMean.reproj
+summary(ndviUrbOpen)
+
+ggplot(data=ndviUrbOpen[,], aes(x=yday,y=NDVI.reproj, color=mission)) + 
+  geom_point(size=0.1, alpha=0.3) +
+  geom_smooth(method="gam") +
+  scale_color_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  scale_fill_manual(values=c("landsat 5"="#56b4e9", "landsat 7"="#0072B2", "landsat 8"="#E69F00", "landsat 9"="#D55E00")) +
+  labs(title="urban-open reprojected") + ylab("Reprojected NDVI")
+
+ggplot(data=ndviUrbOpen[,], aes(x=yday,y=NDVI)) + 
+  ggtitle("urban-open raw ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbOpen[ndviUrbOpen$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) 
+
+
+ggplot(data=ndviUrbOpen[,], aes(x=yday,y=NDVI.reproj)) + 
+  ggtitle("urban-open reprojected ndvi") +
+  geom_point(size=0.1, alpha=0.5, color="gray50") +
+  geom_smooth(method="gam", aes(color="normal", fill="normal")) +
+  geom_smooth(method="gam", data=ndviUrbOpen[ndviUrbOpen$year %in% c(2005, 2012, 2023),], aes(color=as.factor(year), fill=as.factor(year))) +
   scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   ylab("Reprojected NDVI")
