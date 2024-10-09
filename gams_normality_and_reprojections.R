@@ -130,11 +130,12 @@ ndvicrop2005 <- ndvicrop[ndvicrop$year==2005,] #years of interest
 ndvicrop2012 <- ndvicrop[ndvicrop$year==2012,]
 ndvicrop2023 <- ndvicrop[ndvicrop$year==2023,]
 
-gamcrop_2005 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2005) #gams for specific years
+# gamcrop_2005 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2005) #gams for specific years
+gamcrop_2005 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop[ndvicrop$year==2005,]) #gams for specific years
 gamcrop_2012 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2012)
 gamcrop_2023 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2023)
 
-
+newDF$NDVI2005 <- predict(gamcrop_2005, newdata=newDF)
 gamcrop_2005_pred <- predict(gamcrop_2005, newdata=newDF)
 gamcrop_2012_pred <- predict(gamcrop_2012, newdata=newDF)
 gamcrop_2023_pred <- predict(gamcrop_2023, newdata=newDF)
@@ -155,13 +156,44 @@ deriv_2012$crop2012 <- gamcrop_2012_pred
 deriv_2023$normal <- NDVIcrop_norm
 deriv_2023$crop2023 <- gamcrop_2023_pred
 
-ggplot()+
-  geom_line(data=deriv_norm,aes(x=yday, y=normal, color="normal"))+
-  geom_line(data=deriv_2005,aes(x=yday,y=crop2005, color="crop2005")) +
-  geom_line(data=deriv_2012,aes(x=yday, y=crop2012, color="crop2012")) +
-  geom_line(data=deriv_2023,aes(x=yday, y=crop2023, color="crop2023"))+
+deriv_comparison <- rbind(data.frame(deriv_norm[,c("yday", "mean", "lwr", "upr")], year="normal"),
+                          data.frame(deriv_2005[,c("yday", "mean", "lwr", "upr")], year=2005),
+                          data.frame(deriv_2012[,c("yday", "mean", "lwr", "upr")], year=2012),
+                          data.frame(deriv_2023[,c("yday", "mean", "lwr", "upr")], year=2023))
+deriv_comparison$NDVI.mean <- c(deriv_norm$normal, deriv_2005$crop2005, deriv_2012$crop2012, deriv_2023$crop2023)
+
+for(DAY in unique(deriv_comparison$yday)){
+  ydayNorm  <- deriv_comparison[deriv_comparison$yday==DAY & deriv_comparison$year=="normal", c("mean", "lwr", "upr")]
+  rowsYrs <- which(deriv_comparison$yday==DAY & deriv_comparison$year!="normal")
+  # deriv_comparison[rowsYrs,]
+  ydayYRs <- deriv_comparison[rowsYrs, c("mean", "lwr", "upr")]
+  
+  # Signficiant from normal when UPRyr < LWRnorm | LWRyr>UPRnorm
+  deriv_comparison[rowsYrs, "sig.CompNorm"] <- ifelse(ydayYRs$upr<ydayNorm$lwr | ydayYRs$lwr>ydayNorm$upr, "*", NA)
+}
+deriv_comparison$sig.CompNorm <- as.factor(deriv_comparison$sig.CompNorm)
+summary(deriv_comparison)
+
+ggplot(data=deriv_comparison, aes(x=yday, y=mean, color=year)) +
+  geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr, fill=year), color=NA, alpha=0.2) +
+  geom_line() + 
+  geom_point(data=deriv_comparison[!is.na(deriv_comparison$sig.CompNorm),]) +
+  geom_hline(yintercept=0, linetype="dashed") +  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  theme_bw()
+  
+  
+
+ggplot(data=deriv_comparison, aes(x=yday, y=NDVI.mean, color=year)) +
+  # geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr, fill=year), alpha=0.5) +
+  geom_line() +
+  # geom_line(data=deriv_norm,aes(x=yday, y=normal, color="normal"))+
+  # geom_line(data=deriv_2005,aes(x=yday,y=crop2005, color="crop2005")) +
+  # geom_line(data=deriv_2012,aes(x=yday, y=crop2012, color="crop2012")) +
+  # geom_line(data=deriv_2023,aes(x=yday, y=crop2023, color="crop2023"))+
   labs(title="Crop NDVI Predictions",color="Legend") + ylab("Predicted NDVI") + 
-  scale_color_manual(" ", breaks=c("normal", "crop2005","crop2012","crop2023"), values = c("normal"="black","crop2005"="red","crop2012"="blue","crop2023"="green"))
+  scale_color_manual(values = c("normal"="black","2005"="red","2012"="blue","2023"="green"))
+  # scale_color_manual(" ", breaks=c("normal", "crop2005","crop2012","crop2023"), values = c("normal"="black","crop2005"="red","crop2012"="blue","crop2023"="green"))
 
 #2005 CI example
 deviation <- deriv_2005$normal - deriv_2005$crop2005
