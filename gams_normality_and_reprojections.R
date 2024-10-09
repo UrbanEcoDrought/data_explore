@@ -121,6 +121,65 @@ ggplot(data=ndvicrop[,], aes(x=yday,y=NDVI.reproj)) +
   scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   ylab("Reprojected NDVI")
 
+#new GAM using reprojected data
+gamcrop_norm <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop)
+newDF <- data.frame(yday=seq(1:365)) #create new data frame with column to represent day of year sequence
+NDVIcrop_norm <- predict(gamcrop_norm, newdata=newDF) #normal crop values for a year
+
+ndvicrop2005 <- ndvicrop[ndvicrop$year==2005,] #years of interest
+ndvicrop2012 <- ndvicrop[ndvicrop$year==2012,]
+ndvicrop2023 <- ndvicrop[ndvicrop$year==2023,]
+
+gamcrop_2005 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2005) #gams for specific years
+gamcrop_2012 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2012)
+gamcrop_2023 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndvicrop2023)
+
+
+gamcrop_2005_pred <- predict(gamcrop_2005, newdata=newDF)
+gamcrop_2012_pred <- predict(gamcrop_2012, newdata=newDF)
+gamcrop_2023_pred <- predict(gamcrop_2023, newdata=newDF)
+
+deriv_norm <- calc.derivs(gamcrop_norm, newdata=newDF, vars="yday")
+deriv_2005 <- calc.derivs(gamcrop_2005, newdata = newDF, vars="yday")
+deriv_2012 <- calc.derivs(gamcrop_2012, newdata = newDF, vars="yday")
+deriv_2023 <- calc.derivs(gamcrop_2023, newdata = newDF, vars="yday")
+
+deriv_norm$normal <- NDVIcrop_norm
+
+deriv_2005$normal <- NDVIcrop_norm
+deriv_2005$crop2005 <- gamcrop_2005_pred
+
+deriv_2012$normal <- NDVIcrop_norm
+deriv_2012$crop2012 <- gamcrop_2012_pred
+
+deriv_2023$normal <- NDVIcrop_norm
+deriv_2023$crop2023 <- gamcrop_2023_pred
+
+ggplot()+
+  geom_line(data=deriv_norm,aes(x=yday, y=normal, color="normal"))+
+  geom_line(data=deriv_2005,aes(x=yday,y=crop2005, color="crop2005")) +
+  geom_line(data=deriv_2012,aes(x=yday, y=crop2012, color="crop2012")) +
+  geom_line(data=deriv_2023,aes(x=yday, y=crop2023, color="crop2023"))+
+  labs(title="Crop NDVI Predictions",color="Legend") + ylab("Predicted NDVI") + 
+  scale_color_manual(" ", breaks=c("normal", "crop2005","crop2012","crop2023"), values = c("normal"="black","crop2005"="red","crop2012"="blue","crop2023"="green"))
+
+#2005 CI example
+norm_pos <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean>0,]
+norm_neg <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean<0,]
+
+pos_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean>0,]
+neg_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean<0,]
+
+ggplot()+
+  geom_line(data=deriv_norm,aes(x=yday,y=normal, color="normal")) +
+  geom_line(data=deriv_2005,aes(x=yday,y=crop2005, color="2005"))+
+  geom_point(data=deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean>0,], aes(x=yday, y=normal), color="green3") +
+  geom_point(data=deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean>0,], aes(x=yday, y=crop2005), color="green3") +
+  geom_point(data=deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean<0,], aes(x=yday, y=normal), color="orange3") +
+  geom_point(data=deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean<0,], aes(x=yday, y=crop2005), color="orange3") +
+  labs(title="2005 crop CI") + ylab("NDVI")
+
+
 ######################
 #forest
 ######################
@@ -180,6 +239,10 @@ ggplot(data=ndviforest[,], aes(x=yday,y=NDVI.reproj)) +
   scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   ylab("Reprojected NDVI")
+
+
+
+
 
 ######################
 #grassland
@@ -489,4 +552,19 @@ ggplot(data=ndviUrbOpen[,], aes(x=yday,y=NDVI.reproj)) +
   scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   ylab("Reprojected NDVI")
 
+######################
+
+# #using 2012 for CI and derivatives trial
+# ndvicrop_2012 <- (ndvicrop[ndvicrop$year=="2012",])
+# newDF <- data.frame(yday=seq(1:365))
+# newDF$mission <- "landsat 7"
+# derivs <- calc.derivs(gamcrop, newdata=newDF, vars="yday")
+# derivs$NDVI.pred <- predict(gamcrop, newdata=derivs)
+# 
+# ggplot(data=derivs) +
+#   geom_line(aes(x=yday, y=NDVI.pred), color="black") +
+#   #geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr), alpha=0.5) +
+#   geom_point(data=derivs[derivs$sig=="*" & derivs$mean>0,], aes(x=yday, y=NDVI.pred), color="green3") +
+#   geom_point(data=derivs[derivs$sig=="*" & derivs$mean<0,], aes(x=yday, y=NDVI.pred), color="orange3") +
+#   labs(title="2012 crop CI")
 ######################
