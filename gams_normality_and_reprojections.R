@@ -164,11 +164,16 @@ ggplot()+
   scale_color_manual(" ", breaks=c("normal", "crop2005","crop2012","crop2023"), values = c("normal"="black","crop2005"="red","crop2012"="blue","crop2023"="green"))
 
 #2005 CI example
+deviation <- deriv_2005$normal - deriv_2005$crop2005
+
 norm_pos <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean>0,]
 norm_neg <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean<0,]
 
 pos_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean>0,]
 neg_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean<0,]
+
+summary(comparedf(pos_2005, norm_pos))
+
 
 ggplot()+
   geom_line(data=deriv_norm,aes(x=yday,y=normal, color="normal")) +
@@ -240,7 +245,68 @@ ggplot(data=ndviforest[,], aes(x=yday,y=NDVI.reproj)) +
   scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
   ylab("Reprojected NDVI")
 
+#new GAM using reprojected data
+gamforest_norm <- gam(NDVI.reproj ~ s(yday, k=18), data=ndviforest)
+newDF <- data.frame(yday=seq(1:365)) #create new data frame with column to represent day of year sequence
+NDVIforest_norm <- predict(gamforest_norm, newdata=newDF) #normal crop values for a year
 
+ndviforest2005 <- ndviforest[ndviforest$year==2005,] #years of interest
+ndviforest2012 <- ndviforest[ndviforest$year==2012,]
+ndviforest2023 <- ndviforest[ndviforest$year==2023,]
+
+gamforest_2005 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndviforest2005) #gams for specific years
+gamforest_2012 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndviforest2012)
+gamforest_2023 <- gam(NDVI.reproj ~ s(yday, k=18), data=ndviforest2023)
+
+
+gamforest_2005_pred <- predict(gamforest_2005, newdata=newDF)
+gamforest_2012_pred <- predict(gamforest_2012, newdata=newDF)
+gamforest_2023_pred <- predict(gamforest_2023, newdata=newDF)
+
+deriv_norm <- calc.derivs(gamforest_norm, newdata=newDF, vars="yday")
+deriv_2005 <- calc.derivs(gamforest_2005, newdata = newDF, vars="yday")
+deriv_2012 <- calc.derivs(gamforest_2012, newdata = newDF, vars="yday")
+deriv_2023 <- calc.derivs(gamforest_2023, newdata = newDF, vars="yday")
+
+deriv_norm$normal <- NDVIforest_norm
+
+deriv_2005$normal <- NDVIforest_norm
+deriv_2005$forest2005 <- gamforest_2005_pred
+
+deriv_2012$normal <- NDVIforest_norm
+deriv_2012$forest2012 <- gamforest_2012_pred
+
+deriv_2023$normal <- NDVIforest_norm
+deriv_2023$forest2023 <- gamforest_2023_pred
+
+ggplot()+
+  geom_line(data=deriv_norm,aes(x=yday, y=normal, color="normal"))+
+  geom_line(data=deriv_2005,aes(x=yday,y=forest2005, color="2005")) +
+  geom_line(data=deriv_2012,aes(x=yday, y=forest2012, color="2012")) +
+  geom_line(data=deriv_2023,aes(x=yday, y=forest2023, color="2023"))+
+  labs(title="Forest NDVI Predictions",color="Legend") + ylab("Predicted NDVI") + 
+  scale_color_manual(" ", breaks=c("normal", "2005","2012","2023"), values = c("normal"="black","2005"="red","2012"="blue","2023"="green"))
+
+#2005 CI example
+deviation <- deriv_2005$normal - deriv_2005$forest2005
+
+norm_pos <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean>0,]
+norm_neg <- deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean<0,]
+
+pos_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean>0,]
+neg_2005 <- deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean<0,]
+
+summary(comparedf(pos_2005, norm_pos))
+
+
+ggplot()+
+  geom_line(data=deriv_norm,aes(x=yday,y=normal, color="normal")) +
+  geom_line(data=deriv_2005,aes(x=yday,y=forest2005, color="2005"))+
+  geom_point(data=deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean>0,], aes(x=yday, y=normal), color="green3") +
+  geom_point(data=deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean>0,], aes(x=yday, y=forest2005), color="green3") +
+  geom_point(data=deriv_norm[deriv_norm$sig=="*" & deriv_norm$mean<0,], aes(x=yday, y=normal), color="orange3") +
+  geom_point(data=deriv_2005[deriv_2005$sig=="*" & deriv_2005$mean<0,], aes(x=yday, y=forest2005), color="orange3") +
+  labs(title="2005 forest CI") + ylab("NDVI")
 
 
 
