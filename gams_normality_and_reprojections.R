@@ -140,6 +140,49 @@ gamcrop_2005_pred <- predict(gamcrop_2005, newdata=newDF)
 gamcrop_2012_pred <- predict(gamcrop_2012, newdata=newDF)
 gamcrop_2023_pred <- predict(gamcrop_2023, newdata=newDF)
 
+crop_post_norm <- post.distns(model.gam=gamcrop_norm, newdata=newDF, vars="yday")
+crop_post_norm$NDVIpred <- NDVIcrop_norm
+
+crop_post_2005 <- post.distns(model.gam=gamcrop_2005, newdata=newDF, vars="yday")
+crop_post_2005$crop2005 <- gamcrop_2005_pred
+
+crop_post_2012 <- post.distns(model.gam=gamcrop_2012, newdata=newDF, vars="yday")
+crop_post_2012$crop2012 <- gamcrop_2012_pred
+
+crop_post_2023 <- post.distns(model.gam=gamcrop_2023, newdata=newDF, vars="yday")
+crop_post_2023$crop2023 <- gamcrop_2023_pred
+
+
+post_comparison <- rbind(data.frame(crop_post_norm[,c("yday", "mean", "lwr", "upr")], year="normal"),
+                          data.frame(crop_post_2005[,c("yday", "mean", "lwr", "upr")], year=2005),
+                          data.frame(crop_post_2012[,c("yday", "mean", "lwr", "upr")], year=2012),
+                          data.frame(crop_post_2023[,c("yday", "mean", "lwr", "upr")], year=2023))
+post_comparison$NDVI.mean <- c(crop_post_norm$NDVIpred, crop_post_2005$crop2005, crop_post_2012$crop2012, crop_post_2023$crop2023)
+
+for(DAY in unique(post_comparison$yday)){
+  ydayNorm  <- post_comparison[post_comparison$yday==DAY & post_comparison$year=="normal", c("mean", "lwr", "upr")]
+  rowsYrs <- which(post_comparison$yday==DAY & post_comparison$year!="normal")
+  # deriv_comparison[rowsYrs,]
+  ydayYRs <- post_comparison[rowsYrs, c("mean", "lwr", "upr")]
+
+  # Signficiant from normal when UPRyr < LWRnorm | LWRyr>UPRnorm
+  post_comparison[rowsYrs, "sig.CompNorm"] <- ifelse(ydayYRs$upr<ydayNorm$lwr | ydayYRs$lwr>ydayNorm$upr, "*", NA)
+}
+post_comparison$sig.CompNorm <- as.factor(post_comparison$sig.CompNorm)
+summary(post_comparison)
+  
+
+ggplot(data=post_comparison, aes(x=yday, y=NDVI.mean, color=year)) +
+  geom_ribbon(aes(x=yday, ymin=lwr, ymax=upr, fill=year), color=NA, alpha=0.2) +
+  geom_line() + 
+  geom_point(data=post_comparison[!is.na(post_comparison$sig.CompNorm),]) +
+  scale_color_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  scale_fill_manual(name="year", values=c("normal" = "black", "2005"="#D55E00", "2012"="#E69F00", "2023"="#CC79A7")) +
+  theme_bw()
+
+
+
+
 deriv_norm <- calc.derivs(gamcrop_norm, newdata=newDF, vars="yday")
 deriv_2005 <- calc.derivs(gamcrop_2005, newdata = newDF, vars="yday")
 deriv_2012 <- calc.derivs(gamcrop_2012, newdata = newDF, vars="yday")
